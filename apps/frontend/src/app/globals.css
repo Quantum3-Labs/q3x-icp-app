@@ -1,0 +1,164 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+@theme inline {
+  --color-app-background: var(--app-background);
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+
+  /* Additional colors for Sidebar */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-divider: var(--divider);
+  --color-surface-light: var(--surface-light);
+  --color-surface-blue: var(--surface-blue);
+  --color-tertiary: var(--tertiary);
+
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius: var(--radius);
+  --font-sans: var(--font-barlow);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+}
+
+body {
+  background-color: var(--app-background);
+  color: var(--primary);
+  font-family: var(--font-barlow), system-ui, sans-serif;
+}
+
+html {
+  font-family: var(--font-barlow), system-ui, sans-serif;
+}
+
+/* Hide scrollbar for webkit browsers */
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.overflow-y-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.overflow-x-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/************ Custom Checkbox ************/
+.custom-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+
+.custom-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 16px;
+  width: 16px;
+  z-index: 1;
+}
+
+.custom-checkbox .checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  background: #e0e0e0;
+  border: 1px solid #adadad;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:hover .checkmark {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
+  background: #e0e0e0;
+  border: 1px solid #adadad;
+}
+
+.custom-checkbox .checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 50%;
+  top: 50%;
+  transform: translate(-40%, -60%);
+  width: 19px;
+  height: 19px;
+  background-image: url("/misc/custom-check-icon.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkmark::after {
+  display: block;
+}
+/************ Custom Checkbox ************/
+
+/************** Animations **************/
+
+/****** Transaction Summary *******/
+@keyframes transaction-summary-slide-in {
+  from {
+    width: 0px;
+    opacity: 0;
+  }
+  to {
+    width: 400px;
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: transaction-summary-slide-in 0.3s ease-out forwards;
+}
+
+@keyframes transaction-summary-slide-out {
+  from {
+    width: 400px;
+    opacity: 1;
+  }
+  to {
+    width: 0px;
+    opacity: 0;
+  }
+}
+
+.animate-slide-out {
+  animation: transaction-summary-slide-out 0.3s ease-out forwards;
+}
+/****** Transaction Summary *******/

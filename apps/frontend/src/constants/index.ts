@@ -1,0 +1,1 @@
+export const DEFAULT_CANISTER = "vizcg-th777-77774-qaaea-cai";
