@@ -5,6 +5,15 @@ import { idlFactory } from "@/assets/wallet.did";
 import { CanisterState } from "./canisterState";
 import { useAuthStore } from "../auth";
 
+export interface TransferEvmArgs {
+  to: string;
+  value: bigint;
+  chain_id: bigint;
+  gas_limit: bigint;
+  wallet_id: string;
+  gas_price: bigint;
+}
+
 export interface CanisterActions {
   // Actor management
   setActor: (canisterId: string) => Promise<any>;
@@ -21,6 +30,12 @@ export interface CanisterActions {
   approveMessage: (walletId: string, messageId: string) => Promise<number>;
   checkCanSign: (walletId: string, messageId: string) => Promise<boolean>;
   signMessage: (walletId: string, messageId: string) => Promise<string>;
+  transfer: (walletId: string, amount: bigint, recipient: string) => Promise<string>;
+  getEvmAddress: (walletId: string) => Promise<string>;
+  transferEvm: (args: TransferEvmArgs) => Promise<string>;
+  getTransactionCount: (walletId: string, chainId: bigint) => Promise<bigint>;
+  getWalletPortfolio: (walletId: string, chainId: bigint) => Promise<any>;
+  proposeBatchTransaction: (walletId: string, batchData: any) => Promise<any>;
 }
 
 export const createCanisterActions: StateCreator<CanisterState & CanisterActions, [], [], CanisterActions> = (
@@ -30,7 +45,7 @@ export const createCanisterActions: StateCreator<CanisterState & CanisterActions
 ) => ({
   setActor: async (canisterId: string) => {
     try {
-      const { identity } = useAuthStore.getState(); 
+      const { identity } = useAuthStore.getState();
 
       if (!identity) {
         throw new Error("No identity available");
@@ -223,6 +238,120 @@ export const createCanisterActions: StateCreator<CanisterState & CanisterActions
       }
     } catch (error) {
       console.error("Failed to sign message:", error);
+      throw error;
+    }
+  },
+
+  transfer: async (walletId: string, amount: bigint, recipient: string) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      const recipientPrincipal = Principal.fromText(recipient);
+      const result = await actor.transfer(walletId, amount, recipientPrincipal);
+
+      if ("Ok" in result) {
+        console.log("Transfer completed successfully:", result.Ok);
+        return result.Ok;
+      } else {
+        throw new Error(result.Err);
+      }
+    } catch (error) {
+      console.error("Failed to transfer:", error);
+      throw error;
+    }
+  },
+
+  getEvmAddress: async (walletId: string) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      const result = await actor.get_evm_address(walletId);
+
+      if ("Ok" in result) {
+        console.log("EVM address retrieved successfully:", result.Ok);
+        return result.Ok;
+      } else {
+        throw new Error(result.Err);
+      }
+    } catch (error) {
+      console.error("Failed to get EVM address:", error);
+      throw error;
+    }
+  },
+
+  transferEvm: async (args: TransferEvmArgs) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      const transferArgs = {
+        to: args.to,
+        value: args.value,
+        chain_id: args.chain_id,
+        gas_limit: args.gas_limit,
+        wallet_id: args.wallet_id,
+        gas_price: args.gas_price,
+      };
+
+      const result = await actor.transfer_evm(transferArgs);
+
+      if ("Ok" in result) {
+        console.log("EVM transfer proposal created:", result.Ok);
+        return result.Ok;
+      } else {
+        throw new Error(result.Err);
+      }
+    } catch (error) {
+      console.error("Failed to transfer EVM:", error);
+      throw error;
+    }
+  },
+
+  getTransactionCount: async (walletId: string, chainId: bigint) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      const result = await actor.get_transaction_count(walletId, chainId);
+
+      if ("Ok" in result) {
+        console.log("Transaction count retrieved successfully:", result.Ok);
+        return result.Ok;
+      } else {
+        throw new Error(result.Err);
+      }
+    } catch (error) {
+      console.error("Failed to get transaction count:", error);
+      throw error;
+    }
+  },
+
+  getWalletPortfolio: async (walletId: string, chainId: bigint) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      const result = await actor.get_wallet_portfolio(walletId, chainId);
+      return result;
+    } catch (error) {
+      console.error("Failed to get portfolio:", error);
+      throw error;
+    }
+  },
+
+  proposeBatchTransaction: async (walletId: string, batchData: any) => {
+    const { actor } = get();
+    if (!actor) throw new Error("Actor not initialized");
+
+    try {
+      console.log("🚀 Proposing batch transaction:", batchData);
+      const result = await actor.propose_batch_transaction(walletId, batchData);
+      console.log("Batch proposed successfully:", result);
+      return result;
+    } catch (error) {
+      console.error("Failed to propose batch:", error);
       throw error;
     }
   },

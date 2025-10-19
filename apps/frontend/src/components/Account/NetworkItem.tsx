@@ -1,10 +1,14 @@
+import { copyAddressToClipboard, getShortenedAddress } from "@/utils/helper";
 import React, { useState, useEffect } from "react";
 import { Tooltip } from "react-tooltip";
+import { ReceiveModal } from "../Modals/ReceiveModal";
+import { ArrowRightLeft } from "lucide-react";
 
 interface NetworkItemProps {
   icon: string;
   name: string;
   address: string;
+  symbol: string;
   isDefault?: boolean;
   isActive?: boolean;
   onNetworkSelect?: (networkName: string) => void;
@@ -14,11 +18,13 @@ export function NetworkItem({
   icon,
   name,
   address,
+  symbol,
   isDefault = false,
   isActive = false,
   onNetworkSelect,
 }: NetworkItemProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [openReceiveModal, setOpenReceiveModal] = useState(false);
 
   const handleClick = () => {
     onNetworkSelect?.(name);
@@ -52,14 +58,14 @@ export function NetworkItem({
   const badgeClasses = isActive ? `${baseBadgeClasses} bg-primary` : `${baseBadgeClasses} bg-neutral-400`;
 
   return (
-    <div className={containerClasses} onClick={handleClick}>
+    <div className={containerClasses}>
       <img src={icon} alt={`${name} icon`} className=" w-6 " />
       <div className="flex-1 shrink self-stretch my-auto text-base tracking-tight leading-none basis-3 text-neutral-600">
         {name}
         {isDefault && <span className="text-primary"> [Default]</span>}
       </div>
-      <div className={badgeClasses}>
-        <span className="self-stretch my-auto text-white">{address}</span>
+      <div className={badgeClasses} onClick={() => copyAddressToClipboard(address)}>
+        <span className="self-stretch my-auto text-white">{getShortenedAddress(address)}</span>
       </div>
       <div className="relative">
         <img
@@ -81,25 +87,29 @@ export function NetworkItem({
           render={({ content, activeAnchor }) => (
             <>
               <div className="flex flex-col gap-1 w-full justify-center p-1">
-                <div className="flex items-center gap-2 hover:bg-[#F1F1F1] rounded-md p-1.5 w-full">
-                  <img src="/account/account-detail-icon.svg" alt="Account detail" className="w-5 h-5" />
-                  <span className=" text-gray-700">Account Details</span>
-                </div>
-                <div className="flex items-center gap-2 hover:bg-[#F1F1F1] rounded-md p-1.5 w-full">
+                <div className="flex items-center gap-2 hover:bg-[#F1F1F1] rounded-md p-1.5 w-full" onClick={() => setOpenReceiveModal(true)}>
                   <img src="/account/fund-account.svg" alt="Fund account" className="w-5 h-5" />
                   <span className=" text-gray-700">Fund Account</span>
                 </div>
+                <div
+                  onClick={handleClick}
+                  className="flex items-center gap-2 hover:bg-[#F1F1F1] rounded-md p-1.5 w-full"
+                >
+                  <ArrowRightLeft className="w-5 h-5 text-gray-700" />
+                  <span className=" text-gray-700">Switch to chain</span>
+                </div>
               </div>
-              <div className="border-t border-divider p-1">
+              {/* <div className="border-t border-divider p-1">
                 <div className="flex items-center gap-2  rounded-md p-1.5 w-full bg-[#FFF1F1]">
                   <img src="/misc/red-trashcan-icon.svg" alt="Remove account" className="w-5 h-5" />
                   <span className=" text-gray-700">Remove account</span>
                 </div>
-              </div>
+              </div> */}
             </>
           )}
         />
       </div>
+      <ReceiveModal address={address} symbol={symbol?.toLowerCase()} open={openReceiveModal} onOpenChange={setOpenReceiveModal}><></></ReceiveModal>
     </div>
   );
 }

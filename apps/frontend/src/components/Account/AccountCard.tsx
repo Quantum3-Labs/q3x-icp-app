@@ -1,13 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { NetworkItem } from "./NetworkItem";
-
-interface Network {
-  icon: string;
-  name: string;
-  address: string;
-  isDefault?: boolean;
-}
+import { Network } from "./AccountSidebar";
+import { copyAddressToClipboard, getShortenedAddress } from "@/utils/helper";
 
 interface AccountCardProps {
   accountName: string;
@@ -17,8 +12,10 @@ interface AccountCardProps {
   showSubAccountButton?: boolean;
   isExpanded?: boolean;
   isCurrentAccount?: boolean;
+  activeChainId?: string;
   onSubAccountClick?: () => void;
   onSwitchClick?: () => void;
+  onNetworkSwitch?: (network: Network) => void;
 }
 
 export function AccountCard({
@@ -29,19 +26,20 @@ export function AccountCard({
   showSubAccountButton = false,
   isExpanded: controlledExpanded,
   isCurrentAccount,
+  activeChainId,
   onSubAccountClick,
   onSwitchClick,
+  onNetworkSwitch,
 }: AccountCardProps) {
   const [internalExpanded, setInternalExpanded] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
-  const [activeNetwork, setActiveNetwork] = React.useState<string>(
-    networks.find(network => network.isDefault)?.name || networks[0]?.name || "",
-  );
-
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
 
   const handleNetworkSelect = (networkName: string) => {
-    setActiveNetwork(networkName);
+    const selectedNetwork = networks.find(network => network.name === networkName);
+    if (selectedNetwork && onNetworkSwitch) {
+      onNetworkSwitch(selectedNetwork);
+    }
   };
 
   const handleToggle = () => {
@@ -61,18 +59,15 @@ export function AccountCard({
         } ${isCurrentAccount ? "bg-blue-50" : ""}`}
         onClick={handleToggle}
       >
-        {/* <header
-        className={`flex items-center justify-between px-2 py-2 pr-5 cursor-pointer hover:bg-neutral-50 transition-colors ${
-          !isExpanded ? "border-b-0" : "border-b border-divider"
-        }`}
-        onClick={handleToggle}
-      > */}
         <div className="flex items-start gap-1.5">
           <img src={accountIcon} alt={`${accountName} icon`} className="h-[35px] w-[35px]  rounded-full " />
           <div className="flex w-[92px] flex-col gap-2 justify-center">
             <h3 className="text-base leading-none tracking-tight text-text-primary">{accountName}</h3>
-            <div className="flex items-center justify-center rounded-full bg-primary text-xs w-fit px-2 text-white ">
-              <span>{accountAddress}</span>
+            <div className="flex items-center justify-center rounded-full bg-primary text-xs w-fit px-2 text-white" onClick={e => {
+              e.stopPropagation();
+              copyAddressToClipboard(accountAddress);
+            }}>
+              <span>{getShortenedAddress(accountAddress)}</span>
             </div>
           </div>
         </div>
@@ -103,21 +98,22 @@ export function AccountCard({
                 <span>Current Account</span>
               </div>
             )}
-            {/* <section className="w-full p-1.5">
+            <section className="w-full p-1.5">
               {networks.map((network, index) => (
                 <NetworkItem
                   key={index}
                   icon={network.icon}
                   name={network.name}
+                  symbol={network.symbol}
                   address={network.address}
                   isDefault={network.isDefault}
-                  isActive={network.name === activeNetwork}
+                  isActive={network.chainId === activeChainId}
                   onNetworkSelect={handleNetworkSelect}
                 />
               ))}
             </section>
 
-            {showSubAccountButton && (
+            {showSubAccountButton && isCurrentAccount && (
               <footer className="w-full border-t border-neutral-200 bg-neutral-100 p-1.5">
                 <button
                   className="flex w-full items-center justify-center gap-2 rounded-xl px-5 py-1.5 text-sm leading-tight tracking-tight text-white shadow cursor-pointer"
@@ -132,7 +128,7 @@ export function AccountCard({
                   <span>New sub account</span>
                 </button>
               </footer>
-            )} */}
+            )}
           </>
         )}
       </div>

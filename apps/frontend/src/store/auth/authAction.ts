@@ -1,6 +1,7 @@
 import { AuthClient } from "@dfinity/auth-client";
 import { StateCreator } from "zustand";
 import { AuthState } from "./authState";
+import { useWalletStore } from "../wallet";
 
 export interface AuthActions {
   login: () => Promise<void>;
@@ -46,6 +47,8 @@ export const createAuthActions: StateCreator<AuthState & AuthActions, [], [], Au
             principal,
             isAuthenticated: true,
           });
+
+          useWalletStore.getState().clearCurrentWallet();
         },
         onError: error => {
           console.error("Login failed:", error);
@@ -68,6 +71,8 @@ export const createAuthActions: StateCreator<AuthState & AuthActions, [], [], Au
         principal: null,
         isAuthenticated: false,
       });
+
+      useWalletStore.getState().clearCurrentWallet();
 
       if ("indexedDB" in window) {
         try {

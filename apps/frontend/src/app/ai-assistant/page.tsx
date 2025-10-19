@@ -1,3 +1,5 @@
+"use client"
+
 import AiAssistantContainer from "@/components/AiAssistant/AiAssistantContainer";
 import React from "react";
 

@@ -1,3 +1,5 @@
+"use client"
+
 import NewAccountContainer from "@/components/NewAccount/NewAccountContainer";
 import React from "react";
 

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AccountSidebar from "../Account/AccountSidebar";
-import { useAuthStore } from "@/store";
+import { useAuthStore, useWalletStore } from "@/store";
 import PrimaryButton from "./Button/PrimaryButton";
+import { useDraftTransactions } from "@/hooks/api/useTransaction";
+import { copyAddressToClipboard } from "@/utils/helper";
+import { DevelopingFeatureModal } from "../Modals/DevelopingFeatureModal";
 
 export const ACCOUNT_SIDEBAR_OFFSET = 285; // Main sidebar width
 export const NEW_SUB_ACCOUNT_SIDEBAR_OFFSET = 567; // Account sidebar width + gap
@@ -25,8 +28,8 @@ const sectionItems = [
     menuItems: [
       { icon: "/sidebar/dashboard.svg", label: "dashboard", link: SIDEBAR_LINKS.DASHBOARD },
       { icon: "/sidebar/address-book.svg", label: "address book", link: SIDEBAR_LINKS.ADDRESS_BOOK },
-      { icon: "/sidebar/ai-assistant.svg", label: "ai assistant", link: SIDEBAR_LINKS.AI_ASSISTANT },
-      { icon: "/logo/icp-avatar.svg", label: "Vetkey", link: SIDEBAR_LINKS.VETKEYS },
+      // { icon: "/sidebar/ai-assistant.svg", label: "ai assistant", link: SIDEBAR_LINKS.AI_ASSISTANT },
+      // { icon: "/logo/icp-avatar.svg", label: "Vetkey", link: SIDEBAR_LINKS.VETKEYS },
     ],
   },
   {
@@ -35,21 +38,22 @@ const sectionItems = [
     menuItems: [
       { icon: "/sidebar/send.svg", label: "send", link: SIDEBAR_LINKS.SEND },
       { icon: "/sidebar/swap.svg", label: "swap", link: SIDEBAR_LINKS.SWAP },
-      { icon: "/sidebar/batch.svg", label: "batch", transactionsCount: 10, link: SIDEBAR_LINKS.BATCH },
+      { icon: "/sidebar/batch.svg", label: "batch", link: SIDEBAR_LINKS.BATCH },
+      // { icon: "/sidebar/batch.svg", label: "batch", transactionsCount: 10, link: SIDEBAR_LINKS.BATCH },
     ],
   },
-  {
-    label: "teams",
-    description: "Multi-sig? Shared control? It's all here.",
-    menuItems: [
-      {
-        icon: "/sidebar/transaction.svg",
-        label: "transactions",
-        transactionsCount: 10,
-        link: SIDEBAR_LINKS.TRANSACTIONS,
-      },
-    ],
-  },
+  // {
+  //   label: "teams",
+  //   description: "Multi-sig? Shared control? It's all here.",
+  //   menuItems: [
+  //     {
+  //       icon: "/sidebar/transaction.svg",
+  //       label: "transactions",
+  //       transactionsCount: 10,
+  //       link: SIDEBAR_LINKS.TRANSACTIONS,
+  //     },
+  //   ],
+  // },
 ];
 
 const SectionItem = ({
@@ -70,6 +74,51 @@ const SectionItem = ({
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const router = useRouter();
 
+  const itemComponent = (item: any, notRoute = false) => {
+    return (
+      <div
+        key={item.label}
+        className={`group flex flex-row items-center gap-3 px-2 py-2 rounded-[12px] cursor-pointer justify-between uppercase ${
+          selectedItem === item.link ? "bg-primary text-white" : "text-text-primary hover:bg-primary hover:text-white"
+        }`}
+        onClick={() => {
+          if (notRoute) return;
+          router.push(item.link)
+        }}
+        onMouseEnter={() => setHoveredItem(item.link)}
+        onMouseLeave={() => setHoveredItem(null)}
+      >
+        <div className="flex flex-row items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img
+              src={item.icon}
+              alt={item.label}
+              className="scale-125"
+              style={{
+                filter:
+                  selectedItem === item.link || hoveredItem === item.link ? "invert(1) brightness(1000%)" : "none",
+              }}
+            />
+          </div>
+          <span
+            className={`uppercase ${
+              selectedItem === item.link
+                ? "font-bold text-white"
+                : "font-normal text-text-primary group-hover:font-bold group-hover:text-white"
+            }`}
+          >
+            {item.label}
+          </span>
+        </div>
+        {item.transactionsCount && item.transactionsCount > 0 && (
+          <button className="flex flex-row items-center gap-2 bg-surface-light rounded-lg px-3 py-0.5 border border-divider text-text-primary">
+            {item.transactionsCount}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col">
@@ -77,47 +126,12 @@ const SectionItem = ({
         <span className="text-sm text-text-secondary">{description}</span>
       </div>
       <div className="flex flex-col gap-0.5">
-        {menuItems.map(item => (
-          <div
-            key={item.label}
-            className={`group flex flex-row items-center gap-3 px-2 py-2 rounded-[12px] cursor-pointer justify-between uppercase ${
-              selectedItem === item.link
-                ? "bg-primary text-white"
-                : "text-text-primary hover:bg-primary hover:text-white"
-            }`}
-            onClick={() => router.push(item.link)}
-            onMouseEnter={() => setHoveredItem(item.link)}
-            onMouseLeave={() => setHoveredItem(null)}
-          >
-            <div className="flex flex-row items-center gap-3">
-              <div className="w-8 h-8 flex items-center justify-center">
-                <img
-                  src={item.icon}
-                  alt={item.label}
-                  className="scale-125"
-                  style={{
-                    filter:
-                      selectedItem === item.link || hoveredItem === item.link ? "invert(1) brightness(1000%)" : "none",
-                  }}
-                />
-              </div>
-              <span
-                className={`uppercase ${
-                  selectedItem === item.link
-                    ? "font-bold text-white"
-                    : "font-normal text-text-primary group-hover:font-bold group-hover:text-white"
-                }`}
-              >
-                {item.label}
-              </span>
-            </div>
-            {item.transactionsCount && item.transactionsCount > 0 && (
-              <button className="flex flex-row items-center gap-2 bg-surface-light rounded-lg px-3 py-0.5 border border-divider text-text-primary">
-                {item.transactionsCount}
-              </button>
-            )}
-          </div>
-        ))}
+        {menuItems.map(item => {
+          if (item.label === "swap") {
+            return <DevelopingFeatureModal key={item.label}>{itemComponent(item, true)}</DevelopingFeatureModal>;
+          }
+          return itemComponent(item);
+        })}
       </div>
       {showDivider && <div className="w-full h-[1px] my-1 bg-divider" />}
     </div>
@@ -125,13 +139,12 @@ const SectionItem = ({
 };
 
 export default function Sidebar() {
-  const pathname = usePathname();  
+  const pathname = usePathname();
   // Just for testing
-  const [connected, setConnected] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [showAccountSidebar, setShowAccountSidebar] = useState(false);
   const router = useRouter();
-  const { principal } = useAuthStore();
+  const { isAuthenticated, principal, identity, login, logout } = useAuthStore();
 
   const handleItemClick = (itemLabel: string) => {
     setSelectedItem(itemLabel);
@@ -139,6 +152,12 @@ export default function Sidebar() {
 
   const handleAccountClick = () => {
     setShowAccountSidebar(!showAccountSidebar);
+  };
+
+  const handleLogout = (e: any) => {
+    e.stopPropagation();
+    console.log("logout");
+    logout();
   };
 
   useEffect(() => {
@@ -151,8 +170,8 @@ export default function Sidebar() {
       <div className="bg-background relative rounded-lg h-screen min-w-[280px] max-w-[280px] justify-between flex flex-col z-30 border border-[#EDEDED] py-1">
         <div className="p-3">
           {/* Header */}
-          <div className="flex flex-row items-center gap-3" onClick={() => router.push('/')}>
-            <img src="/logo/q3x-logo-icon.svg" alt="logo" className="w-8 h-8" />
+          <div className="flex flex-row items-center gap-3" onClick={() => router.push("/")}>
+            <img src="/logo/q3x-logo-icon.svg" alt="logo" className="w-8 h-8 cursor-pointer" />
             <img src="/logo/q3x-text.svg" alt="logo" className="scale-110" />
             <div className="flex flex-row items-center justify-center rounded-full px-3 py-1 bg-divider">
               <span className="text-sm text-text-secondary">Beta</span>
@@ -180,50 +199,76 @@ export default function Sidebar() {
 
         <div className="flex flex-col gap-2 px-1">
           {/* Request new feature */}
-          <div className="px-3">
+          {/* <div className="px-3">
             <div className="flex flex-row items-center gap-2">
-              <div className="flex items-center justify-center rounded-[12px] px-4 py-3 leading-none bg-surface-light">
+              <div onClick={() => {
+                toast.success("Feature request copied to clipboard! You can now paste it in our Discord.");
+                copy("I would like to request the following feature: ");
+              }} className="flex items-center justify-center rounded-[12px] px-4 py-3 leading-none bg-surface-light">
                 <img src="/misc/plus-icon.svg" alt="plus" className="w-4 h-4" />
               </div>
               <div className="flex rounded-[12px] w-full py-3 px-3 leading-none bg-surface-light">
                 <span className="text-text-secondary">Request new feature</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Account */}
           <div className="flex flex-col">
-            {connected ? (
+            {identity !== null ? (
               <>
-              <div
-              className="flex items-center px-4 py-3 justify-between bg-surface-blue cursor-pointer hover:bg-surface-blue/80 transition-colors"
-              onClick={handleAccountClick}
-            >
-              <div className="flex flex-row items-center gap-2">
-                <img src="/logo/icp-avatar.svg" alt="account" className="w-5 h-5" />
-                <span className="text-text-secondary">{principal ? principal.slice(0, 6) + "..." + principal.slice(-4) : "Not connected"}</span>
-                {/* <img src="/misc/copy-icon.svg" alt="copy" className="w-4 h-4" /> */}
-              </div>
-              <img src="/misc/power-button-icon.svg" alt="logout" className="w-5 h-5" />
-            </div>
-            <div className="flex rounded-b-lg w-full py-2 px-3 justify-between bg-tertiary">
-              <div className="flex flex-row items-center gap-2">
-                <img src="/misc/ticket-icon.svg" alt="ticket" className="w-5 h-5" />
-                <span className="text-white">Current plan</span>
-              </div>
-              <div className="flex flex-row items-center rounded-lg px-3 py-1 bg-white">
-                <span className="text-text-primary">Free</span>
-              </div>
-            </div>
+                <div
+                  className="flex items-center px-4 py-3 justify-between bg-surface-blue cursor-pointer hover:bg-surface-blue/80 transition-colors"
+                  onClick={handleAccountClick}
+                >
+                  <div className="flex flex-row items-center gap-2">
+                    <img src="/logo/icp-avatar.svg" alt="account" className="w-5 h-5" />
+                    <span className="text-text-secondary">
+                      {principal ? principal.slice(0, 6) + "..." + principal.slice(-4) : "Not connected"}
+                    </span>
+                    <img
+                      onClick={e => {
+                        e.stopPropagation();
+                        copyAddressToClipboard(principal || "");
+                      }}
+                      src="/misc/copy-icon.svg"
+                      alt="copy"
+                      className="w-4 h-4"
+                    />
+                  </div>
+                  <img
+                    onClick={e => handleLogout(e)}
+                    src="/misc/power-button-icon.svg"
+                    alt="logout"
+                    className="w-5 h-5"
+                  />
+                </div>
+                <div className="flex rounded-b-lg w-full py-2 px-3 justify-between bg-tertiary">
+                  <div className="flex flex-row items-center gap-2">
+                    <img src="/misc/ticket-icon.svg" alt="ticket" className="w-5 h-5" />
+                    <span className="text-white">Current plan</span>
+                  </div>
+                  <div className="flex flex-row items-center rounded-lg px-3 py-1 bg-white">
+                    <span className="text-text-primary">Free</span>
+                  </div>
+                </div>
               </>
             ) : (
-              <PrimaryButton onClick={() => setConnected(true)} text="Connect your account" />
+              <PrimaryButton
+                onClick={() => {
+                  login();
+                }}
+                text="Connect your account"
+              />
             )}
           </div>
         </div>
       </div>
 
       {/* Account Sidebar */}
+      {showAccountSidebar && (
+        <div className="fixed inset-0 z-20 bg-black/20" onClick={() => setShowAccountSidebar(false)} />
+      )}
       <AccountSidebar isOpen={showAccountSidebar} onClose={() => setShowAccountSidebar(false)} />
     </>
   );

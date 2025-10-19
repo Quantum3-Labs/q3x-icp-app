@@ -3,12 +3,13 @@
 import InfoCardContainer from "./InfoCardContainer";
 import React, { useEffect, useMemo, useState } from "react";
 import TransactionRow from "./TransactionRow";
-import { TransactionType } from "./TransactionRow";
 import { MessageType, parseMessageQueue, PendingMessage } from "@/utils/messages";
 import { stringToHex } from "@/utils/helper";
-import { useSearchParams } from "next/navigation";
-import { useWalletByCanisterId } from "@/hooks/api/useWallets";
 import { useAuthStore, useCanisterStore, useWalletStore } from "@/store";
+import { Skeleton } from "../ui/skeleton";
+import { useTransactionHistory } from "@/hooks/api/useTransactionHistory";
+import { useAddSigner, useRemoveSigner } from "@/hooks/api/useWallets";
+import Image from "next/image";
 
 export interface WalletData {
   signers: string[];
@@ -24,7 +25,7 @@ function Header() {
       <div className="text-[55.78px] font-semibold text-text-primary uppercase leading-none">
         <p>Dashboard</p>
       </div>
-      <div className="bg-white rounded-xl w-[552px] relative">
+      {/* <div className="bg-white rounded-xl w-[552px] relative">
         <div className="flex items-center gap-2 pl-1 pr-2 py-1 w-full">
           <div className="bg-surface-light p-2 rounded-lg shadow-[0px_0px_4px_0px_rgba(18,18,18,0.1)]">
             <img src="/misc/search-icon.svg" alt="search" className="w-4 h-4" />
@@ -45,48 +46,95 @@ function Header() {
           aria-hidden="true"
           className="absolute inset-0 border border-[#e0e0e0] rounded-xl pointer-events-none shadow-[0px_0px_10.3px_0px_rgba(135,151,255,0.14),0px_0px_89.5px_0px_rgba(0,0,0,0.05)]"
         />
-      </div>
+      </div> */}
     </div>
   );
 }
 
 export default function DashboardContainer() {
-  const searchParams = useSearchParams();
-  const canisterIdFromUrl = searchParams.get("canisterid");
   const { identity, principal } = useAuthStore();
   const [walletData, setWalletData] = useState<WalletData[]>([]);
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { actor, getWallet, approveMessage, checkCanSign, signMessage, setActor } = useCanisterStore();
-  const { setCurrentWallet, currentWallet } = useWalletStore();
+  const { actor, getWallet, approveMessage, checkCanSign, signMessage, setActor, getEvmAddress } = useCanisterStore();
+  const { currentWallet } = useWalletStore();
 
-  const { data: wallet, isLoading } = useWalletByCanisterId(canisterIdFromUrl || "");
+  const { mutateAsync: addSigner } = useAddSigner();
+  const { mutateAsync: removeSigner } = useRemoveSigner();
 
-  // TODO: Find a better way to map message type to transaction type
-  const getTransactionType = (messageType: MessageType): TransactionType => {
-    switch (messageType) {
-      case MessageType.ADD_SIGNER:
-        return TransactionType.ADD_SIGNER;
-      case MessageType.REMOVE_SIGNER:
-        return TransactionType.REMOVE_SIGNER;
-      case MessageType.SET_THRESHOLD:
-        return TransactionType.THRESHOLD;
+  const { history, loading: historyLoading, saveTransaction } = useTransactionHistory(currentWallet?.name || "");
+
+  const extractAmount = (message: any): string => {
+    switch (message.type) {
       case MessageType.TRANSFER:
-        return TransactionType.SEND;
+        return message.data.split("::")[0] || "0";
+      case MessageType.TRANSFER_EVM:
+        return message.data.split("::")[1] || "0";
+      case MessageType.BATCH:
+        return "Batch";
       default:
-        return TransactionType.ADD_SIGNER;
+        return "0";
     }
   };
+
+  const extractRecipient = (message: any): string => {
+    switch (message.type) {
+      case MessageType.TRANSFER:
+        return message.data.split("::")[1] || "Unknown";
+      case MessageType.TRANSFER_EVM:
+        return message.data.split("::")[0] || "Unknown";
+      case MessageType.ADD_SIGNER:
+      case MessageType.REMOVE_SIGNER:
+        return message.data;
+      case MessageType.BATCH:
+        return "Multiple";
+      default:
+        return "N/A";
+    }
+  };
+
+  const allTransactions = useMemo(() => {
+    // Convert pending messages to display format
+    const pendingTxs = pendingMessages.map(msg => ({
+      ...msg,
+      isPending: true,
+      createdAt: new Date().toISOString(),
+      id: `pending_${msg.id}`,
+    }));
+
+    // Convert history to display format
+    const historyTxs = history.map(tx => ({
+      id: tx.id,
+      type: tx.type as MessageType,
+      data: tx.data,
+      status: tx.status,
+      isPending: false,
+      createdAt: tx.createdAt,
+      rawMessage: tx.id,
+      needsApproval: false,
+      approveNumber: tx.approveNumber || 0,
+      signers: tx.signers || [],
+      batchData: tx.type === "BATCH" ? tx.data : undefined,
+      txHash: tx.txHash,
+      isHistory: true,
+    }));
+
+    // Combine and sort by date
+    return [...pendingTxs, ...historyTxs]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 50);
+  }, [pendingMessages, history]);
 
   // TODO: find a better way to map message to transaction props
   const getTransactionProps = (message: PendingMessage) => {
     const baseProps = {
-      type: getTransactionType(message.type),
+      type: message.type,
+      isHistory: (message as any)?.isHistory,
       showButtons: message.needsApproval,
-      showChevron: false, // TODO: have expanded content for certain types
       showExternalLink: !message.needsApproval,
       approveNumber: message.approveNumber,
+      approvedSigners: message.signers,
       isApproved: Boolean(
         principal &&
           message.signers &&
@@ -102,13 +150,13 @@ export default function DashboardContainer() {
       case MessageType.ADD_SIGNER:
         return {
           ...baseProps,
-          signers: [message.data.substring(0, 10) + "..."], // Truncate principal for display
+          signers: [message.data],
         };
 
       case MessageType.REMOVE_SIGNER:
         return {
           ...baseProps,
-          signers: [message.data.substring(0, 10) + "..."],
+          signers: [message.data],
         };
 
       case MessageType.SET_THRESHOLD:
@@ -118,12 +166,33 @@ export default function DashboardContainer() {
         };
 
       case MessageType.TRANSFER:
-        // Parse transfer data: "amount::recipient" hoặc similar format
+        // Parse transfer data: "amount::recipient"
         const transferParts = message.data.split("::");
         return {
           ...baseProps,
           amount: transferParts[0] || "Transfer",
-          to: transferParts[1]?.substring(0, 10) + "..." || "Unknown",
+          to: transferParts[1] || "Unknown",
+        };
+
+      case MessageType.TRANSFER_EVM:
+        // Parse EVM transfer data: "to::value::chain_id::gas_price::gas_limit"
+        const evmTransferParts = message.data.split("::");
+
+        if (evmTransferParts.length >= 5) {
+          const to = evmTransferParts[0];
+          const value = evmTransferParts[1];
+
+          return {
+            ...baseProps,
+            amount: value,
+            to,
+          };
+        }
+
+      case MessageType.BATCH:
+        return {
+          ...baseProps,
+          batchData: message.batchData,
         };
 
       default:
@@ -136,6 +205,8 @@ export default function DashboardContainer() {
       setLoading(true);
       const messageHex = stringToHex(messageId);
 
+      const message = pendingMessages.find(m => m.rawMessage === messageId);
+
       // Step 1: Approve the message
       await approveMessage(getWalletId, messageHex);
 
@@ -145,6 +216,31 @@ export default function DashboardContainer() {
       if (canSign) {
         // Step 3: Auto sign if threshold is met
         await signMessage(getWalletId, messageHex);
+
+        if (message && currentWallet?.name) {
+          saveTransaction({
+            type: message.type,
+            data: message.data,
+            status: "success",
+            amount: extractAmount(message),
+            recipient: extractRecipient(message),
+            approveNumber: message.approveNumber,
+            signers: message.signers?.map(s => s.toString()) || [],
+          });
+
+          //add or remove on backend
+          if (message.type === MessageType.ADD_SIGNER) {
+            await addSigner({
+              walletId: currentWallet.name,
+              principal: message.data,
+            });
+          } else if (message.type === MessageType.REMOVE_SIGNER) {
+            await removeSigner({
+              walletId: currentWallet.name,
+              principal: message.data,
+            });
+          }
+        }
       }
 
       // Step 4: Refresh wallet data to update UI
@@ -181,15 +277,6 @@ export default function DashboardContainer() {
   };
 
   useEffect(() => {
-    if (wallet) {
-      setCurrentWallet(wallet);
-    }
-    if (identity && canisterIdFromUrl) {
-      setActor(canisterIdFromUrl || "");
-    }
-  }, [canisterIdFromUrl, wallet]);
-
-  useEffect(() => {
     if (actor && currentWallet?.name) {
       fetchWalletData();
     }
@@ -199,9 +286,43 @@ export default function DashboardContainer() {
     return currentWallet?.name || "wallet-1";
   }, [currentWallet?.name]);
 
-  if (isLoading) {
-    return <span>Loading wallet...</span>;
-  }
+  const emptyTransactionComponent = (
+    <div className={`w-full flex flex-col items-center justify-center py-16 px-4 relative`}>
+      <div className="flex flex-row gap-3 items-center mb-8">
+        <div className="w-[115px] h-[150px] bg-gray-50 rounded-2xl flex items-center justify-center">
+          <span className="w-[20px] h-[20px] block bg-gradient-to-b from-[#363636] to-[#F8F8F8] opacity-30 rounded-4xl"></span>
+        </div>
+        <div className="w-[115px] h-[150px] bg-gray-50 rounded-2xl flex items-center justify-center">
+          <span className="w-[20px] h-[20px] block bg-gradient-to-b from-[#363636] to-[#F8F8F8] opacity-10 rounded-4xl"></span>
+        </div>
+        <div className="relative w-[155px] h-[185px] z-10 rounded-2xl from-[#FFFFFF] to-[#6AA8FF] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]">
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-100 to-blue-200 rounded-2xl shadow-lg">
+            <div className="flex items-center justify-center w-full h-full">
+              <Image
+                src="/common/empty-avatar.svg"
+                alt="No transactions found"
+                width={119}
+                height={177}
+                className="object-contain grayscale-100"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="w-[115px] h-[150px] bg-gray-50 rounded-2xl flex items-center justify-center">
+          <span className="w-[20px] h-[20px] block bg-gradient-to-b from-[#363636] to-[#F8F8F8] opacity-10 rounded-4xl"></span>
+        </div>
+        <div className="w-[115px] h-[150px] bg-gray-50 rounded-2xl flex items-center justify-center">
+          <span className="w-[20px] h-[20px] block bg-gradient-to-b from-[#363636] to-[#F8F8F8] opacity-30 rounded-4xl"></span>
+        </div>
+      </div>
+
+      {/* Text Content */}
+      <div className="text-center space-y-2 max-w-md z-10 relative">
+        <h3 className="text-xl font-bold text-blue-600 tracking-wide">NO TRANSACTION FOUND</h3>
+        <p className="text-sm text-gray-500 leading-relaxed">There is no transaction found in your account</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-5 p-2">
@@ -223,16 +344,20 @@ export default function DashboardContainer() {
       <Header />
 
       {/* body */}
-      {loading ? (
-        <span>Loading wallet data...</span>
+      {loading || historyLoading ? (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
       ) : (
         <div className="content-stretch flex flex-col gap-0.5 items-start justify-start relative size-full">
-          {pendingMessages.length > 0 ? (
-            pendingMessages.map(message => (
-              <TransactionRow key={message.id} loading={loading} {...getTransactionProps(message)} />
+          {allTransactions.length > 0 ? (
+            allTransactions.map(message => (
+              <TransactionRow key={message.id} keyTx={message.id} loading={loading} {...getTransactionProps(message)} />
             ))
           ) : (
-            <div className="text-gray-500 text-center py-8">No pending transactions</div>
+            <> {emptyTransactionComponent} </>
           )}
         </div>
       )}

@@ -1,41 +1,22 @@
 "use client";
 
+import { CreateAccountFormData } from "@/schemas";
 import React, { useState } from "react";
+import { Controller, UseFormReturn } from "react-hook-form";
+import { Field, FieldDescription, FieldError, FieldGroup } from "../ui/field";
+import { InputGroup, InputGroupAddon, InputGroupText } from "../ui/input-group";
+import { Input } from "../ui/input";
 
 interface AccountProps {
   className?: string;
-  onAccountNameChange: (name: string) => void;
+  form: UseFormReturn<CreateAccountFormData>;
   onNextStep: () => void;
-  accountName: string;
+  isValid?: boolean;
 }
 
-export default function Account({ 
-  className, 
-  onAccountNameChange, 
-  onNextStep, 
-  accountName 
-}: AccountProps) {
-  const [showAddressTooltip, setShowAddressTooltip] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<{
-    id: string;
-    name: string;
-    company: string;
-    address: string;
-    icon: string;
-  } | null>(null);
-
-  const handleAddressSelect = (address: any) => {
-    setSelectedAddress(address);
-    onAccountNameChange(address.address);
-    setShowAddressTooltip(false);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onAccountNameChange(e.target.value);
-  };
-
+export default function Account({ className, form, onNextStep, isValid = false }: AccountProps) {
   const handleNextClick = () => {
-    if (accountName.trim()) {
+    if (isValid) {
       onNextStep();
     }
   };
@@ -76,46 +57,66 @@ export default function Account({
         </div>
 
         {/* Address input */}
-        <div className="flex flex-col gap-[5px] items-center justify-start w-full max-w-lg">
-          <div className="flex gap-2.5 items-center justify-center w-full">
-            <div className="bg-white grow min-h-px min-w-px relative rounded-[16px] border border-[#e0e0e0] shadow-[0px_0px_10.3px_0px_rgba(135,151,255,0.14),0px_0px_89.5px_0px_rgba(0,0,0,0.05)] p-3 justify-between flex-row flex">
-              <input
-                type="text"
-                placeholder="Your account name"
-                value={accountName}
-                onChange={handleInputChange}
-                className="text-text-secondary text-[16px] outline-none placeholder:text-text-secondary flex-3"
-              />
-              {selectedAddress?.name && (
-                <div className="text-text-secondary text-[16px] flex-1 flex flex-row items-center justify-end">
-                  [<span className="text-primary">{selectedAddress.name}</span>]
-                </div>
-              )}
-            </div>
-            <img
-              src="/swap/swap-icon.svg"
-              alt="Address book"
-              className="w-5 h-5 cursor-pointer"
-              data-tooltip-id="address-selector-tooltip"
-              onClick={() => setShowAddressTooltip(true)}
-            />
-          </div>
-        </div>
+        <FieldGroup>
+          <Controller
+            name="accountName"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <div className="flex gap-2.5 items-center justify-center w-full">
+                  <InputGroup
+                    className={`bg-white grow min-h-px min-w-px relative rounded-[16px] border shadow-[0px_0px_10.3px_0px_rgba(135,151,255,0.14),0px_0px_89.5px_0px_rgba(0,0,0,0.05)] ${
+                      fieldState.invalid ? "border-red-500" : "border-[#e0e0e0]"
+                    }`}
+                  >
+                    <Input
+                      {...field}
+                      id="account-name-input"
+                      placeholder="Your account name"
+                      className="text-text-secondary text-[16px] outline-none placeholder:text-text-secondary flex-3 border-none bg-transparent p-3"
+                      style={{
+                        clipPath: "inset(0 56px 0 0)",
+                        textOverflow: "ellipsis",
+                        boxShadow: "none !important",
+                        outline: "none !important",
+                      }}
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="off"
+                    />
+                    <InputGroupAddon align="block-end" className="!pb-0 -mt-1">
+                      <InputGroupText
+                        className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-[13px] tabular-nums ${
+                          (field.value?.length || 0) > 30 ? "text-red-400" : "text-gray-400"
+                        }`}
+                      >
+                        {field.value?.length || 0}/30
+                      </InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
 
+                  <img
+                    src="/swap/swap-icon.svg"
+                    alt="Generate name"
+                    className="w-5 h-5 cursor-pointer"
+                    data-tooltip-id="generate-name-tooltip"
+                  />
+                </div>
+                {/* Auto error display */}
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+        </FieldGroup>
         {/* Action buttons */}
         <div className="flex gap-2 items-center justify-center w-full max-w-xs">
-          <button 
+          <button
             onClick={handleNextClick}
-            disabled={!accountName.trim()}
-            className={`flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] ${
-              accountName.trim() 
-                ? 'bg-gradient-to-b from-[#48b3ff] to-[#0059ff]' 
-                : 'bg-gray-400 cursor-not-allowed'
+            disabled={!isValid}
+            className={`flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] cursor-pointer ${
+              isValid ? "bg-gradient-to-b from-[#48b3ff] to-[#0059ff]" : "bg-gray-400 cursor-not-allowed"
             }`}
           >
-            <span className="font-semibold text-[16px] text-center text-white tracking-[-0.16px]">
-              Next Step
-            </span>
+            <span className="font-semibold text-[16px] text-center text-white tracking-[-0.16px]">Next Step</span>
           </button>
         </div>
       </div>

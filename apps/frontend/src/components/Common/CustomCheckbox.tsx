@@ -27,24 +27,32 @@ export const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
 
   const checkboxElement = (
     <div className={`custom-checkbox ${disabled ? "opacity-40 cursor-not-allowed" : ""} ${className}`}>
-      <input type="checkbox" id={id} checked={checked} onChange={handleChange} disabled={disabled} />
+      <input 
+        type="checkbox" 
+        id={id} 
+        checked={checked}
+        onChange={handleChange} 
+        disabled={disabled} 
+      />
       <span className="checkmark"></span>
     </div>
   );
 
   if (label) {
     return (
-      <div className="flex items-center gap-2 cursor-pointer justify-center">
+      <div className={`flex items-center gap-2 justify-center ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
         {checkboxElement}
         {icon && (
           <img
             src={icon}
-            alt="Expand account"
+            alt={label}
             className="w-6"
             style={{ filter: disabled ? "grayscale(50%)" : "none" }}
           />
         )}
-        <span className={`${disabled ? "text-text-secondary opacity-40" : "text-text-primary"}`}>{label}</span>
+        <span className={`${disabled ? "text-text-secondary opacity-40" : "text-text-primary"}`}>
+          {label}
+        </span>
       </div>
     );
   }

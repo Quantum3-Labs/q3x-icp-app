@@ -15,7 +15,10 @@ export const useWalletStore = create<WalletStore>()(
       {
         name: 'wallet-store',
         partialize: (state) => ({
-          currentWallet: state.currentWallet, // Persist current wallet
+          currentWallet: state.currentWallet,
+          activeChainId: state.activeChainId, 
+          activeAddress: state.activeAddress, 
+          subaccounts: state.subaccounts, 
         }),
       }
     ),

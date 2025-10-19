@@ -5,70 +5,101 @@ import { AccountCard } from "./AccountCard";
 import SubAccountSidebar from "./SubAccountSidebar";
 import { ACCOUNT_SIDEBAR_OFFSET, NEW_SUB_ACCOUNT_SIDEBAR_OFFSET } from "../Common/Sidebar";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { getAccountAddressFromPrincipal } from "@/utils/helper";
+import { getAccountAddressFromPrincipal, getShortenedAddress } from "@/utils/helper";
 import { DEFAULT_CANISTER } from "@/constants";
-import { Wallet } from "@q3x/models";
-import { useWalletsByPrincipal } from "@/hooks/api/useWallets";
+import { Wallet, WalletChain } from "@q3x/models";
+import { useSubaccountsByWalletId, useWalletsByPrincipal } from "@/hooks/api/useWallets";
 import { useAuthStore, useWalletStore } from "@/store";
+import { symbol } from "zod";
 
 interface AccountSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const mainAccountNetworks = [
-  {
-    icon: "/logo/icp-avatar.svg",
-    name: "ICP",
-    address: "0xB...37e",
-    isDefault: true,
-    isActive: true,
-  },
-  {
-    icon: "/token/arbitrum.svg",
-    name: "Arbitrum",
-    address: "0xb...AK9",
-    isDefault: false,
-    isActive: false,
-  },
-  {
-    icon: "/token/btc.svg",
-    name: "Bitcoin",
-    address: "0xD...ad8",
-    isDefault: false,
-    isActive: false,
-  },
-  {
-    icon: "/token/eth.svg",
-    name: "Ethereum",
-    address: "0xE...Bbe",
-    isDefault: false,
-    isActive: false,
-  },
-];
+export interface Network {
+  icon: string;
+  name: string;
+  address: string;
+  symbol: string;
+  isDefault?: boolean;
+  chainId?: string;
+  displayName?: string;
+}
 
 export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps) {
   const [showSubAccountSidebar, setShowSubAccountSidebar] = useState(false);
   const { principal } = useAuthStore();
-  const {currentWallet, setCurrentWallet} = useWalletStore();
+  const {
+    currentWallet,
+    setCurrentWallet,
+    subaccounts,
+    setSubaccounts,
+    switchToNetwork,
+    activeChainId,
+    getCurrentNetwork,
+  } = useWalletStore();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const canisterIdFromUrl = searchParams.get("canisterid");
 
   const { data: userWallets = [] } = useWalletsByPrincipal(principal || "");
-  
+  const { data: fetchedSubaccounts = [] } = useSubaccountsByWalletId(currentWallet?.name || "");
+
+  const [currentWalletNetworks, setCurrentWalletNetworks] = useState<Network[]>([]);
+
+  // Create dynamic networks based on real subaccounts
+  const createNetworksFromSubaccounts = (subaccounts: WalletChain[]) => {
+    // Default ICP account (always first)
+    const icpAccount = {
+      icon: "/logo/icp-avatar.svg",
+      name: "ICP",
+      address: getAccountAddressFromPrincipal(currentWallet?.canisterId || ""),
+      isDefault: true,
+      isActive: true,
+      chainId: "0", // ICP doesn't have EVM chain ID
+      displayName: "ICP",
+      symbol: "ICP",
+    };
+
+    // Convert subaccounts to network format
+    const evmNetworks = subaccounts.map(subaccount => ({
+      icon: getChainIcon(subaccount.chainId),
+      name: subaccount.chainName,
+      address: subaccount.evmAddress,
+      isDefault: false,
+      isActive: false,
+      chainId: subaccount.chainId,
+      displayName: subaccount.displayName,
+      symbol: subaccount.displayName,
+    }));
+
+    return [icpAccount, ...evmNetworks];
+  };
+
+  const getChainIcon = (chainId: string) => {
+    const iconMap: Record<string, string> = {
+      "1": "/token/eth.svg",
+      "11155111": "/token/eth.svg", // Sepolia
+      "42161": "/token/arbitrum.svg", // Arbitrum
+      "8453": "/token/base.svg", // Base
+      "10": "/token/optimism.svg", // Optimism
+    };
+    return iconMap[chainId] || "/token/eth.svg"; // Default to ETH
+  };
+
   const handleSwitchWallet = (wallet: Wallet) => {
     setCurrentWallet(wallet);
-    router.push(`/dashboard?canisterid=${wallet.canisterId}`);
     onClose();
   };
-  
+
+  const handleNetworkSwitch = (network: Network) => {
+    switchToNetwork(network.chainId || "0");
+  };
+
   useEffect(() => {
     if (userWallets.length > 0) {
       const firstWallet = userWallets[0] || null;
-      if (principal && pathname.startsWith("/dashboard") && (canisterIdFromUrl || firstWallet?.canisterId)) {
-        router.push(`/dashboard?canisterid=${canisterIdFromUrl || firstWallet?.canisterId}`);
+      if (!currentWallet) {
+        setCurrentWallet(firstWallet);
       }
     }
   }, [principal, userWallets.length > 0]);
@@ -79,6 +110,15 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
       setShowSubAccountSidebar(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const currentWalletNetworks = createNetworksFromSubaccounts(fetchedSubaccounts);
+    setCurrentWalletNetworks(currentWalletNetworks);
+
+    if (fetchedSubaccounts.length > 0) {
+      setSubaccounts(fetchedSubaccounts);
+    }
+  }, [fetchedSubaccounts.length, currentWallet?.canisterId]);
 
   return (
     <>
@@ -98,7 +138,7 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
           </p>
         </header>
 
-        <button className="flex justify-center items-center px-5 py-2 w-full text-base font-semibold text-center rounded-xl shadow bg-primary border border-[#3151D3]">
+        <button className="flex justify-center items-center px-5 py-2 w-full text-base font-semibold text-center rounded-xl shadow bg-primary border border-[#3151D3] cursor-pointer">
           <span
             className="text-white"
             onClick={() => {
@@ -111,14 +151,16 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
         </button>
 
         <AccountCard
-          key={canisterIdFromUrl || "default-account"}
+          key={currentWallet?.canisterId || "default-account"}
           accountName={currentWallet?.name || "Default Account"}
-          accountAddress={`${getAccountAddressFromPrincipal(currentWallet?.canisterId || "").slice(
-            0,
-            8,
-          )}...${getAccountAddressFromPrincipal(currentWallet?.canisterId || "").slice(-8)}`}
+          accountAddress={`${(getAccountAddressFromPrincipal(currentWallet?.canisterId || ""))}`}
           accountIcon="/account/default-avatar.svg"
           isCurrentAccount={true}
+          networks={currentWalletNetworks}
+          showSubAccountButton={true}
+          onSubAccountClick={() => setShowSubAccountSidebar(true)}
+          onNetworkSwitch={handleNetworkSwitch}
+          activeChainId={activeChainId}
         />
         {userWallets.map(wallet => {
           if (wallet.canisterId === currentWallet?.canisterId) return null;
@@ -126,24 +168,15 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
             <AccountCard
               key={wallet.canisterId}
               accountName={wallet?.name ?? ""}
-              accountAddress={`${getAccountAddressFromPrincipal(wallet.canisterId || DEFAULT_CANISTER).slice(
-                0,
-                8,
-              )}...${getAccountAddressFromPrincipal(wallet.canisterId || DEFAULT_CANISTER).slice(-8)}`}
+              accountAddress={`${(getAccountAddressFromPrincipal(wallet?.canisterId || ""))}`}
               accountIcon="/account/default-avatar.svg"
               isCurrentAccount={false}
               onSwitchClick={() => handleSwitchWallet(wallet)}
+              showSubAccountButton={true}
+              onSubAccountClick={() => setShowSubAccountSidebar(true)}
             />
           );
         })}
-        {/* <AccountCard
-          accountName="Account 1"
-          accountAddress="0xB...37e"
-          accountIcon="/account/default-avatar.svg"
-          // networks={mainAccountNetworks}
-          // showSubAccountButton={true}
-          // onSubAccountClick={() => setShowSubAccountSidebar(true)}
-        /> */}
       </div>
 
       <SubAccountSidebar

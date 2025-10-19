@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import React from "react";
+import { PortfolioModal } from "../Modals/PortFolioModal";
 
 const Title: React.FC = () => {
   const pathname = usePathname();
@@ -44,14 +45,17 @@ const Title: React.FC = () => {
         </div>
       </div>
       {/* Portfolio */}
-      <div className="flex flex-row gap-2 w-[150px] justify-center items-center bg-secondary rounded-lg">
-        <img src="/misc/coin-icon.gif" alt="portfolio" className="w-4 h-4" />
-        <span className="text-text-primary">PORTFOLIO</span>
-      </div>
+      <PortfolioModal>
+        <div className="flex flex-row gap-2 w-[150px] justify-center items-center bg-secondary rounded-lg cursor-pointer">
+          <img src="/misc/coin-icon.gif" alt="portfolio" className="w-4 h-4" />
+          <span className="text-text-primary">PORTFOLIO</span>
+        </div>
+      </PortfolioModal>
+
       {/* Notification */}
-      <div className="flex flex-row gap-2 w-[50px] justify-center items-center bg-secondary rounded-lg">
+      {/* <div className="flex flex-row gap-2 w-[50px] justify-center items-center bg-secondary rounded-lg">
         <img src="/misc/bell-icon.gif" alt="notification" className="w-5 h-5" />
-      </div>
+      </div> */}
     </div>
   );
 };

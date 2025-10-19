@@ -11,7 +11,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
-import { CreateWalletDto } from '@q3x/models';
+import {
+  AddSignerDto,
+  AddSignerResponseDto,
+  CreateSubaccountDto,
+  CreateSubaccountResponseDto,
+  CreateWalletDto,
+  RemoveSignerResponseDto,
+  SubaccountsResponseDto,
+} from '@q3x/models';
 import {
   CreateWalletResponseDto,
   DeleteWalletResponseDto,
@@ -62,7 +70,7 @@ export class WalletController {
     if (principal) {
       this.logger.log(`Getting wallets for principal: ${principal}`);
       const wallets = await this.walletService.getWalletsByPrincipal(principal);
-      
+
       return {
         success: true,
         data: wallets,
@@ -96,6 +104,66 @@ export class WalletController {
     return {
       success: true,
       data: status,
+    };
+  }
+
+  @Post('chains')
+  async createSubaccount(
+    @Body() createDto: CreateSubaccountDto,
+  ): Promise<CreateSubaccountResponseDto> {
+    this.logger.log(`Creating subaccount for wallet: ${createDto.walletId}`);
+    const subaccount = await this.walletService.createSubaccount(createDto);
+
+    return {
+      success: true,
+      data: subaccount,
+      message: WALLET_RESPONSE_MESSAGE.CREATE_SUBACCOUNT_SUCCESS,
+    };
+  }
+
+  @Get(':walletId/chains')
+  async getSubaccounts(
+    @Param('walletId') walletId: string,
+  ): Promise<SubaccountsResponseDto> {
+    this.logger.log(`Getting subaccounts for wallet: ${walletId}`);
+    const subaccounts = await this.walletService.getSubaccounts(walletId);
+
+    return {
+      success: true,
+      data: subaccounts,
+      count: subaccounts.length,
+    };
+  }
+
+  @Post(':walletId/signers')
+  @HttpCode(HttpStatus.CREATED)
+  async addSigner(
+    @Param('walletId') walletId: string,
+    @Body() addSignerDto: AddSignerDto,
+  ): Promise<AddSignerResponseDto> {
+    this.logger.log(
+      `Adding signer ${addSignerDto.principal} to wallet: ${walletId}`,
+    );
+    await this.walletService.addSigner(walletId, addSignerDto.principal);
+
+    return {
+      success: true,
+      message: WALLET_RESPONSE_MESSAGE.ADD_SIGNER_SUCCESS,
+    };
+  }
+
+  @Delete(':walletId/signers/:principal')
+  @HttpCode(HttpStatus.OK)
+  async removeSigner(
+    @Param('walletId') walletId: string,
+    @Param('principal') principal: string,
+  ): Promise<RemoveSignerResponseDto> {
+    this.logger.log(`Removing signer ${principal} from wallet: ${walletId}`);
+    await this.walletService.removeSigner(walletId, principal);
+
+    return {
+      success: true,
+      message: WALLET_RESPONSE_MESSAGE.REMOVE_SIGNER_SUCCESS,
     };
   }
 }
