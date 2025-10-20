@@ -27,11 +27,19 @@ export class IcpAgentService implements OnModuleInit {
   private async initializeAgent(): Promise<void> {
     try {
       const replicaUrl = this.configService.get<string>('icp.replicaUrl');
+      const replicaUrlProd =
+        this.configService.get<string>('icp.replicaUrlProd');
       const fetchRootKey = this.configService.get<boolean>('icp.fetchRootKey');
       const identity = await this.identityService.getIdentity();
 
+      this.logger.log(
+        `Initializing ICP Agent with replica URL: ${
+          fetchRootKey ? replicaUrl : replicaUrlProd
+        }`,
+      );
+
       this.agent = await HttpAgent.create({
-        host: replicaUrl,
+        host: fetchRootKey ? replicaUrl : replicaUrlProd,
         identity,
       });
 

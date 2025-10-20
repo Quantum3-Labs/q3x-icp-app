@@ -2,6 +2,7 @@ import { registerAs } from '@nestjs/config';
 
 export default registerAs('icp', () => ({
   replicaUrl: process.env.ICP_REPLICA_URL || 'http://localhost:4943',
+  replicaUrlProd: process.env.ICP_REPLICA_URL_PROD || 'https://icp0.io',
   backendPrivateKey: process.env.BACKEND_PRIVATE_KEY,
   canisterWasmPath: process.env.CANISTER_WASM_PATH || './assets/wallet.wasm',
   defaultCanisterCycles: BigInt(

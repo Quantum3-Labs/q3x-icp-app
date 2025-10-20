@@ -55,7 +55,7 @@ export default function DashboardContainer() {
   const { identity, principal } = useAuthStore();
   const [walletData, setWalletData] = useState<WalletData[]>([]);
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const { actor, getWallet, approveMessage, checkCanSign, signMessage, setActor, getEvmAddress } = useCanisterStore();
   const { currentWallet } = useWalletStore();
@@ -357,7 +357,7 @@ export default function DashboardContainer() {
               <TransactionRow key={message.id} keyTx={message.id} loading={loading} {...getTransactionProps(message)} />
             ))
           ) : (
-            <> {emptyTransactionComponent} </>
+            <> {currentWallet?.name && emptyTransactionComponent} </>
           )}
         </div>
       )}

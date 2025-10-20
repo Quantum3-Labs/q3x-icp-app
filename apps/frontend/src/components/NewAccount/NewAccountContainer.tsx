@@ -40,7 +40,7 @@ export default function NewAccountContainer() {
       signers: [{ address: "" }],
       threshold: 1,
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   const {
@@ -80,12 +80,10 @@ export default function NewAccountContainer() {
 
       // Handle Result type
       if ("Ok" in result) {
-        const walletCreated = new Wallet(
-          {
-            canisterId: backendResponse.data.canisterId,
-            name: data.accountName,
-          },
-        );
+        const walletCreated = new Wallet({
+          canisterId: backendResponse.data.canisterId,
+          name: data.accountName,
+        });
         setCurrentWallet(walletCreated);
         console.log("Wallet created successfully");
         toast.success("Wallet created successfully");
@@ -94,8 +92,15 @@ export default function NewAccountContainer() {
       } else {
         setCreateError(result.Err);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.log("Failed to create wallet:", err);
+      const message = err?.message || err?.response?.data?.message || "";
+
+      if (message.includes("Backend Error: Bad Request")) {
+        toast.error("Not enough balance to create a wallet");
+      } else {
+        toast.error("Failed to create wallet, please try again");
+      }
     } finally {
       setLoading(false);
     }
