@@ -116,6 +116,7 @@ printenv DEFAULT_ACCOUNT_ID
 Copy the account IDs and update `apps/frontend/dfx.json`:
 - Replace `YOUR_MINT_ACCOUNT` with the `MINTER_ACCOUNT_ID`
 - Replace `YOUR_DEFAULT_ACCOUNT` with the `DEFAULT_ACCOUNT_ID`
+- Then run dfx deploy to deploy canister local
 
 #### Frontend Environment Setup
 
