@@ -263,13 +263,13 @@ export default function SendContainer() {
                 </div>
               )}
             </div>
-            <img
+            {/* <img
               src="/send/address-book-icon.svg"
               alt="Address book"
               className="w-5 h-5 cursor-pointer"
               data-tooltip-id="address-selector-tooltip"
               onClick={() => setShowAddressTooltip(true)}
-            />
+            /> */}
           </div>
         </div>
 
@@ -277,7 +277,7 @@ export default function SendContainer() {
         <div className="flex gap-2 items-center justify-center w-full max-w-xs">
           <button
             onClick={handleAddBatch}
-            className="bg-gradient-to-b from-[#e6a7ff] to-[#c43ef7] flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(231,113,255,0.5),0px_0px_0px_1px_#ed66ff] flex-1 disabled:opacity-50"
+            className="bg-gradient-to-b from-[#e6a7ff] to-[#c43ef7] flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(231,113,255,0.5),0px_0px_0px_1px_#ed66ff] flex-1 disabled:opacity-50 cursor-pointer"
             disabled={isLoading || !amount || !address || !selectedToken}
           >
             <span className="font-semibold text-[16px] text-center text-white tracking-[-0.16px]">
@@ -288,7 +288,7 @@ export default function SendContainer() {
           <button
             onClick={handleSendNow}
             disabled={isLoading || !amount || !address || !selectedToken}
-            className="bg-gradient-to-b from-[#48b3ff] to-[#0059ff] flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] flex-1 disabled:opacity-50"
+            className="bg-gradient-to-b from-[#48b3ff] to-[#0059ff] flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] flex-1 disabled:opacity-50 cursor-pointer"
           >
             <span className="font-semibold text-[16px] text-center text-white tracking-[-0.16px]">
               {isLoading ? "Sending..." : "Send now"}

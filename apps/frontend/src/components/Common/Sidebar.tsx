@@ -27,7 +27,7 @@ const sectionItems = [
     description: "Shortcuts to your power tools.",
     menuItems: [
       { icon: "/sidebar/dashboard.svg", label: "dashboard", link: SIDEBAR_LINKS.DASHBOARD },
-      { icon: "/sidebar/address-book.svg", label: "address book", link: SIDEBAR_LINKS.ADDRESS_BOOK },
+      // { icon: "/sidebar/address-book.svg", label: "address book", link: SIDEBAR_LINKS.ADDRESS_BOOK },
       // { icon: "/sidebar/ai-assistant.svg", label: "ai assistant", link: SIDEBAR_LINKS.AI_ASSISTANT },
       // { icon: "/logo/icp-avatar.svg", label: "Vetkey", link: SIDEBAR_LINKS.VETKEYS },
     ],
@@ -110,11 +110,11 @@ const SectionItem = ({
             {item.label}
           </span>
         </div>
-        {item.transactionsCount && item.transactionsCount > 0 && (
+        {/* {item.transactionsCount && item.transactionsCount > 0 && (
           <button className="flex flex-row items-center gap-2 bg-surface-light rounded-lg px-3 py-0.5 border border-divider text-text-primary">
             {item.transactionsCount}
           </button>
-        )}
+        )} */}
       </div>
     );
   };

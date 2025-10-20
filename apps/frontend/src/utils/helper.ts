@@ -85,6 +85,17 @@ export const buildAvailableTokens = (portfolio: PortfolioBalance, symbol = "icp"
         chainId: "11155111",
         balance: ethBalance,
       });
+    } else if (symbol === "arb") {
+      // ICP balance
+      const arbBalance = formatWeiToEther(portfolio.native_balance || "0");
+      tokens.push({
+        id: "arb",
+        name: "Arbitrum",
+        symbol: "ARB",
+        icon: "/token/arb.svg",
+        chainId: "421614",
+        balance: arbBalance,
+      });
     }
 
     // Native ETH balance

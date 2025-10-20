@@ -79,7 +79,8 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
     const iconMap: Record<string, string> = {
       "1": "/token/eth.svg",
       "11155111": "/token/eth.svg", // Sepolia
-      "42161": "/token/arbitrum.svg", // Arbitrum
+      "42161": "/token/arb.svg", // Arbitrum
+      "421614": "/token/arb.svg", // Arbitrum Sepolia
       "8453": "/token/base.svg", // Base
       "10": "/token/optimism.svg", // Optimism
     };

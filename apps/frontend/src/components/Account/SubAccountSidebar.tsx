@@ -25,12 +25,12 @@ export const supportedChains = [
     enabled: true,
   },
   {
-    chainId: "42161",
-    chainName: "Arbitrum One",
+    chainId: "421614",
+    chainName: "Arbitrum Sepolia",
     label: "Arbitrum",
     symbol: "ARB",
-    icon: "/token/arbitrum.svg",
-    enabled: false,
+    icon: "/token/arb.svg",
+    enabled: true,
   },
   {
     chainId: "None",

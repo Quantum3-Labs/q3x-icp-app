@@ -23,7 +23,7 @@ export const DevelopingFeatureModal: React.FC<DevelopingFeatureModalProps> = ({ 
               <img src={"/common/develop-icon.svg"} width={60} height={60} />
               <span className="font-semibold text-gray-900">DEVELOPING FEATURE</span>
             </div>
-            <DialogClose>
+            <DialogClose asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-1 text-black bg-white cursor-pointer">
                 <X className="h-4 w-4" />
               </Button>
@@ -52,7 +52,7 @@ export const DevelopingFeatureModal: React.FC<DevelopingFeatureModalProps> = ({ 
           </div>
 
           {/* Footer */}
-          <DialogClose>
+          <DialogClose asChild>
             <div className="p-4">
               <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white rounded-lg py-3 cursor-pointer">
                 Got it
