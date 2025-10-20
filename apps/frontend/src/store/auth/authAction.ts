@@ -73,6 +73,9 @@ export const createAuthActions: StateCreator<AuthState & AuthActions, [], [], Au
       });
 
       useWalletStore.getState().clearCurrentWallet();
+      // remove every local storage items
+      console.log("Clearing local storage on logout");
+      localStorage.clear();
 
       if ("indexedDB" in window) {
         try {

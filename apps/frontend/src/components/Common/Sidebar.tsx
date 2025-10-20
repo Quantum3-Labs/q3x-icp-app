@@ -154,10 +154,13 @@ export default function Sidebar() {
     setShowAccountSidebar(!showAccountSidebar);
   };
 
-  const handleLogout = (e: any) => {
+  const handleLogout = async (e: any) => {
     e.stopPropagation();
     console.log("logout");
-    logout();
+    const isLogout = await logout();
+    if (isLogout) {
+      window.location.reload();
+    }
   };
 
   useEffect(() => {

@@ -3,6 +3,7 @@ export interface HistoryTransaction {
   walletId: string;
   type: string;
   data: any;
+  batchData?: any;
   status: "pending" | "success" | "failed";
   txHash?: string;
   amount: string;
@@ -13,7 +14,7 @@ export interface HistoryTransaction {
 }
 
 class HistoryStorage {
-  private readonly STORAGE_PREFIX = 'wallet_history_';
+  private readonly STORAGE_PREFIX = "wallet_history_";
 
   // Generate wallet-specific key
   private getWalletKey(walletName: string): string {
@@ -26,35 +27,43 @@ class HistoryStorage {
       const key = this.getWalletKey(walletName);
       const data = localStorage.getItem(key);
       const history = data ? JSON.parse(data) : [];
-      
-      return history.sort((a: HistoryTransaction, b: HistoryTransaction) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+
+      return history.sort(
+        (a: HistoryTransaction, b: HistoryTransaction) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     } catch (error) {
-      console.error('Failed to get wallet history:', error);
+      console.error("Failed to get wallet history:", error);
       return [];
     }
   }
 
+  safeStringify = (obj: any) => {
+    return JSON.stringify(obj, (_, value) => (typeof value === "bigint" ? value.toString() : value));
+  };
+
   // Save new transaction to specific wallet
-  saveTransaction(walletName: string, transaction: Omit<HistoryTransaction, 'id' | 'createdAt' | 'walletId'>): HistoryTransaction {
+  saveTransaction(
+    walletName: string,
+    transaction: Omit<HistoryTransaction, "id" | "createdAt" | "walletId">,
+  ): HistoryTransaction {
     const newTransaction: HistoryTransaction = {
       ...transaction,
       id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       walletId: walletName, // Use wallet name as ID
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     const key = this.getWalletKey(walletName);
     const currentHistory = this.getWalletHistory(walletName);
-    
+
     // Add to beginning of array
     currentHistory.unshift(newTransaction);
-    
+
     // Keep only last 100 transactions to avoid storage bloat
     const limitedHistory = currentHistory.slice(0, 100);
-    
-    localStorage.setItem(key, JSON.stringify(limitedHistory));
+
+    localStorage.setItem(key, this.safeStringify(limitedHistory));
     return newTransaction;
   }
 
@@ -64,15 +73,15 @@ class HistoryStorage {
       const key = this.getWalletKey(walletName);
       const history = this.getWalletHistory(walletName);
       const index = history.findIndex(tx => tx.id === id);
-      
+
       if (index !== -1) {
         history[index] = { ...history[index], ...updates };
-        localStorage.setItem(key, JSON.stringify(history));
+        localStorage.setItem(key, this.safeStringify(history));
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Failed to update transaction:', error);
+      console.error("Failed to update transaction:", error);
       return false;
     }
   }
@@ -83,7 +92,7 @@ class HistoryStorage {
       const key = this.getWalletKey(walletName);
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('Failed to clear wallet history:', error);
+      console.error("Failed to clear wallet history:", error);
     }
   }
 
@@ -91,11 +100,9 @@ class HistoryStorage {
   getAllWalletNames(): string[] {
     try {
       const keys = Object.keys(localStorage);
-      return keys
-        .filter(key => key.startsWith(this.STORAGE_PREFIX))
-        .map(key => key.replace(this.STORAGE_PREFIX, ''));
+      return keys.filter(key => key.startsWith(this.STORAGE_PREFIX)).map(key => key.replace(this.STORAGE_PREFIX, ""));
     } catch (error) {
-      console.error('Failed to get wallet names:', error);
+      console.error("Failed to get wallet names:", error);
       return [];
     }
   }
@@ -110,7 +117,7 @@ class HistoryStorage {
         }
       });
     } catch (error) {
-      console.error('Failed to clear all history:', error);
+      console.error("Failed to clear all history:", error);
     }
   }
 
@@ -124,7 +131,7 @@ class HistoryStorage {
       walletNames.forEach(walletName => {
         const history = this.getWalletHistory(walletName);
         totalTransactions += history.length;
-        
+
         const key = this.getWalletKey(walletName);
         const data = localStorage.getItem(key);
         if (data) {
@@ -135,10 +142,10 @@ class HistoryStorage {
       return {
         totalWallets: walletNames.length,
         totalTransactions,
-        storageSize: Math.round(storageSize / 1024) // KB
+        storageSize: Math.round(storageSize / 1024), // KB
       };
     } catch (error) {
-      console.error('Failed to get storage info:', error);
+      console.error("Failed to get storage info:", error);
       return { totalWallets: 0, totalTransactions: 0, storageSize: 0 };
     }
   }

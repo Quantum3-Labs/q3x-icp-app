@@ -298,7 +298,7 @@ export default function TransactionRow({
               if ("EvmTransfer" in tx) {
                 const evmTx = tx.EvmTransfer;
                 return (
-                  <div className="relative flex flex-col gap-1 pt-0.5 pl-2" key={evmTx.to}>
+                  <div className="relative flex flex-col gap-1 pt-0.5 pl-2" key={`${keyTx}-evm-${Math.random()}`}>
                     <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary"></div>
                     <div className="bg-[#ededed] grid grid-cols-[auto_1fr] gap-x-20 gap-y-2 pl-5 pr-2.5 py-2.5 w-full text-text-primary">
                       <span>Send</span>
@@ -324,9 +324,20 @@ export default function TransactionRow({
                         <span>{getAmountByCoinType(icpTx.amount.toString(), "ICP")} ICP</span>
                         <img src="/arrow/thin-long-arrow-right.svg" alt="chevron" className="w-15" />
                         <span>
-                          [<span className="text-primary">{Principal.from(icpTx.to_principal).toText()}</span>]{" "}
+                          {(icpTx.to_principal as any)?.__principal__
+                            ? [
+                                <span className="text-primary flex items-center gap-1" key={keyTx}>
+                                  {Principal.from((icpTx.to_principal as any).__principal__).toText()}{" "}
+                                  {copyIcon(Principal.from((icpTx.to_principal as any).__principal__).toText())}
+                                </span>,
+                              ]
+                            : [
+                                <span className="text-primary flex items-center gap-1" key={keyTx}>
+                                  {Principal.from(icpTx.to_principal).toText()}{" "}
+                                  {copyIcon(Principal.from(icpTx.to_principal).toText())}
+                                </span>,
+                              ]}
                         </span>
-                        {copyIcon(Principal.from(icpTx.to_principal).toText())}
                       </div>
                     </div>
                   </div>

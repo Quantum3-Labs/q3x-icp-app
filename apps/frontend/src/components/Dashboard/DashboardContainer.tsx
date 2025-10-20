@@ -3,7 +3,7 @@
 import InfoCardContainer from "./InfoCardContainer";
 import React, { useEffect, useMemo, useState } from "react";
 import TransactionRow from "./TransactionRow";
-import { MessageType, parseMessageQueue, PendingMessage } from "@/utils/messages";
+import { decodeBatchMessage, MessageType, parseMessageQueue, PendingMessage } from "@/utils/messages";
 import { stringToHex } from "@/utils/helper";
 import { useAuthStore, useCanisterStore, useWalletStore } from "@/store";
 import { Skeleton } from "../ui/skeleton";
@@ -115,7 +115,7 @@ export default function DashboardContainer() {
       needsApproval: false,
       approveNumber: tx.approveNumber || 0,
       signers: tx.signers || [],
-      batchData: tx.type === "BATCH" ? tx.data : undefined,
+      batchData: tx.batchData,
       txHash: tx.txHash,
       isHistory: true,
     }));
@@ -124,6 +124,7 @@ export default function DashboardContainer() {
     return [...pendingTxs, ...historyTxs]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 50);
+  // }, [pendingMessages, history, currentWallet?.name]);
   }, [pendingMessages, history]);
 
   // TODO: find a better way to map message to transaction props
@@ -141,7 +142,7 @@ export default function DashboardContainer() {
           message.signers.length > 0 &&
           message.signers.map(s => s.toString()).includes(principal),
       ),
-      oldThreshold: walletData[0].threshold,
+      oldThreshold: walletData[0]?.threshold,
       status: message.needsApproval ? undefined : ("success" as const),
       onApprove: () => handleApprove(message.rawMessage),
     };
@@ -206,7 +207,7 @@ export default function DashboardContainer() {
       const messageHex = stringToHex(messageId);
 
       const message = pendingMessages.find(m => m.rawMessage === messageId);
-
+      
       // Step 1: Approve the message
       await approveMessage(getWalletId, messageHex);
 
@@ -218,6 +219,7 @@ export default function DashboardContainer() {
         await signMessage(getWalletId, messageHex);
 
         if (message && currentWallet?.name) {
+          const batchData = decodeBatchMessage(message?.rawMessage || "");
           saveTransaction({
             type: message.type,
             data: message.data,
@@ -225,6 +227,7 @@ export default function DashboardContainer() {
             amount: extractAmount(message),
             recipient: extractRecipient(message),
             approveNumber: message.approveNumber,
+            batchData: batchData,
             signers: message.signers?.map(s => s.toString()) || [],
           });
 
@@ -354,7 +357,7 @@ export default function DashboardContainer() {
         <div className="content-stretch flex flex-col gap-0.5 items-start justify-start relative size-full">
           {allTransactions.length > 0 ? (
             allTransactions.map(message => (
-              <TransactionRow key={message.id} keyTx={message.id} loading={loading} {...getTransactionProps(message)} />
+              <TransactionRow key={message.id} keyTx={`${message.id}-${Math.random()}`} loading={loading} {...getTransactionProps(message)} />
             ))
           ) : (
             <> {currentWallet?.name && emptyTransactionComponent} </>

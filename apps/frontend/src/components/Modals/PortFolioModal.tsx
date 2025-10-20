@@ -19,7 +19,6 @@ interface PortfolioModalProps {
 export const PortfolioModal: React.FC<PortfolioModalProps> = ({ children }) => {
   const router = useRouter();
   const { getCurrentNetwork } = useWalletStore();
-  console.log("🚀 ~ PortfolioModal ~ getCurrentNetwork:", getCurrentNetwork());
   const { data: portfolio, isLoading, error } = usePortfolio();
 
   const [tokenData, setTokenData] = React.useState<Token[]>([]);
