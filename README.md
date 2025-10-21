@@ -5,7 +5,15 @@ Q3x is an one-stop, privacy-first programmable multisig platform supporting mult
 ## High Level Architecture
 <img width="7185" height="6096" alt="image" src="https://github.com/user-attachments/assets/3bd3c0a0-043d-4e1f-9f89-cf2dc0c246c8" />
 
-
+## Roadmap
+[X] UI Design
+[X] Multisig Canister
+[X] Multisig Canister With VetKey Integration
+[X] Multisig Canister With Chain Fusion Integration (Arbitrum Sepolia and Ethereum Sepolia for now
+[] Expand to support Solana
+[] Expand to support Bitcoin
+[] Expand to support more EVMs
+[] Expand to support more than just managing multisig, introduce payroll management system
 
 # Running Q3x Locally
 
