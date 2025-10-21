@@ -36,12 +36,12 @@ const createTransactionAPI = async (transactionData: CreateTransactionDto): Prom
 };
 
 const getTransactions = async (filters: {
-  walletId?: string;
+  canisterId?: string;
   status?: string;
   type?: string;
 }): Promise<Transaction[]> => {
   const params = new URLSearchParams();
-  if (filters.walletId) params.append("walletId", filters.walletId);
+  if (filters.canisterId) params.append("canisterId", filters.canisterId);
   if (filters.status) params.append("status", filters.status);
   if (filters.type) params.append("type", filters.type);
 
@@ -149,13 +149,13 @@ const batchDeleteTransactionsAPI = async (transactionIds: string[]): Promise<num
 // Query keys
 export const transactionKeys = {
   all: ["transactions"] as const,
-  byWallet: (walletId: string) => [...transactionKeys.all, "wallet", walletId] as const,
-  byWalletAndStatus: (walletId: string, status: string) =>
-    [...transactionKeys.all, "wallet", walletId, "status", status] as const,
-  byWalletAndType: (walletId: string, type: string) =>
-    [...transactionKeys.all, "wallet", walletId, "type", type] as const,
+  byWallet: (canisterId: string) => [...transactionKeys.all, "wallet", canisterId] as const,
+  byWalletAndStatus: (canisterId: string, status: string) =>
+    [...transactionKeys.all, "wallet", canisterId, "status", status] as const,
+  byWalletAndType: (canisterId: string, type: string) =>
+    [...transactionKeys.all, "wallet", canisterId, "type", type] as const,
   byId: (id: string) => [...transactionKeys.all, "id", id] as const,
-  filtered: (filters: { walletId?: string; status?: string; type?: string }) =>
+  filtered: (filters: { canisterId?: string; status?: string; type?: string }) =>
     [...transactionKeys.all, "filtered", filters] as const,
 };
 
@@ -168,7 +168,7 @@ export const useCreateTransaction = () => {
     onSuccess: data => {
       // Invalidate transactions for this wallet
       queryClient.invalidateQueries({
-        queryKey: transactionKeys.byWallet(data.walletId),
+        queryKey: transactionKeys.byWallet(data.canisterId),
       });
       // Invalidate all transaction queries
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
@@ -179,11 +179,11 @@ export const useCreateTransaction = () => {
   });
 };
 
-export const useTransactions = (filters: { walletId?: string; status?: string; type?: string }) => {
+export const useTransactions = (filters: { canisterId?: string; status?: string; type?: string }) => {
   return useQuery({
     queryKey: transactionKeys.filtered(filters),
     queryFn: () => getTransactions(filters),
-    enabled: !!filters.walletId, // Only fetch if walletId is provided
+    enabled: !!filters.canisterId, // Only fetch if canisterId is provided
   });
 };
 
@@ -207,7 +207,7 @@ export const useUpdateTransactionStatus = () => {
       });
       // Invalidate transactions for this wallet
       queryClient.invalidateQueries({
-        queryKey: transactionKeys.byWallet(data.walletId),
+        queryKey: transactionKeys.byWallet(data.canisterId),
       });
       // Invalidate all transaction queries
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
@@ -226,7 +226,7 @@ export const useBulkUpdateTransactionStatus = () => {
     onSuccess: (transactions, variables) => {
       // Invalidate transactions for this wallet
       queryClient.invalidateQueries({
-        queryKey: transactionKeys.byWallet(variables.walletId),
+        queryKey: transactionKeys.byWallet(variables.canisterId),
       });
       // Invalidate all transaction queries
       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
@@ -260,14 +260,14 @@ export const useBatchDeleteTransactions = () => {
 };
 
 // Convenience hooks for specific use cases
-export const useDraftTransactions = (walletId: string) => {
-  return useTransactions({ walletId, status: "DRAFT" });
+export const useDraftTransactions = (canisterId: string) => {
+  return useTransactions({ canisterId, status: "DRAFT" });
 };
 
-export const useProposedTransactions = (walletId: string) => {
-  return useTransactions({ walletId, status: "PROPOSED" });
+export const useProposedTransactions = (canisterId: string) => {
+  return useTransactions({ canisterId, status: "PROPOSED" });
 };
 
-export const useExecutedTransactions = (walletId: string) => {
-  return useTransactions({ walletId, status: "EXECUTED" });
+export const useExecutedTransactions = (canisterId: string) => {
+  return useTransactions({ canisterId, status: "EXECUTED" });
 };

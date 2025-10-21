@@ -211,7 +211,7 @@ export default function BatchContainer() {
   const { mutateAsync: batchDeleteTransactions } = useBatchDeleteTransactions();
 
   // API hooks
-  const { data: transactions = [], isLoading } = useDraftTransactions(currentWallet?.name || "");
+  const { data: transactions = [], isLoading } = useDraftTransactions(currentWallet?.canisterId || "");
   const bulkUpdateStatus = useBulkUpdateTransactionStatus();
 
   const convertToRustTransaction = (transaction: Transaction) => {
@@ -338,7 +338,7 @@ export default function BatchContainer() {
       await bulkUpdateStatus.mutateAsync({
         transactionIds: Array.from(selectedItems),
         status: "PROPOSED",
-        walletId: currentWallet.name,
+        canisterId: currentWallet.canisterId,
       });
 
       // Reset selection

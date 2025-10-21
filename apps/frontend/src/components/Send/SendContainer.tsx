@@ -127,7 +127,7 @@ export default function SendContainer() {
 
       // Create transaction with DRAFT status
       await createTransaction.mutateAsync({
-        walletId: currentWallet.name,
+        canisterId: currentWallet.canisterId,
         type: transactionType,
         data: transactionData,
         description: `${selectedToken?.symbol} transfer: ${amount} to ${address}`,

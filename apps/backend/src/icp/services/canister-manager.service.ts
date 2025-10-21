@@ -14,6 +14,8 @@ import {
   SimplifiedCanisterStatus,
 } from '@q3x/models';
 import { IDL } from '@dfinity/candid';
+import { idlFactory } from './cycle-wallet.did.js';
+import { Actor } from '@dfinity/agent';
 
 @Injectable()
 export class CanisterManagerService {
@@ -39,7 +41,6 @@ export class CanisterManagerService {
       const backendPrincipal = await this.getBackendPrincipal();
       const backendPrincipalStr = backendPrincipal.toString();
       this.logger.log(`Backend Principal: ${backendPrincipalStr}`);
-      let result;
       let canisterId: string;
 
       if (nodeEnv === 'development') {
@@ -59,14 +60,30 @@ export class CanisterManagerService {
       } else {
         // Production/Mainnet - use createCanister
         this.logger.log('Using createCanister for production');
+        const walletCanister = Actor.createActor(idlFactory, {
+          agent: await this.icpAgentService.getAgent(),
+          canisterId: 'ent4z-waaaa-aaaau-acmnq-cai', // Wallet canister ID
+        });
 
-        result = await management.createCanister({
+        const result: any = await walletCanister.wallet_create_canister({
+          cycles: BigInt(1_500_000_000_000), // 1.5T cycles for canister creation
           settings: {
-            controllers: [backendPrincipalStr],
+            controller: [backendPrincipal],
+            freezing_threshold: [],
+            controllers: [],
+            memory_allocation: [],
+            compute_allocation: [],
           },
         });
 
-        canisterId = result.canister_id.toString();
+        this.logger.log('Create canister result:', result);
+
+        if ('Ok' in result) {
+          canisterId = result.Ok.canister_id.toString();
+          // use canisterId
+        } else {
+          this.logger.error('Error when creating canister:', result.Err);
+        }
       }
 
       this.logger.log(`Canister created successfully: ${canisterId}`);

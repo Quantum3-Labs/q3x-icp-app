@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { AccountCard } from "./AccountCard";
 import SubAccountSidebar from "./SubAccountSidebar";
 import { ACCOUNT_SIDEBAR_OFFSET, NEW_SUB_ACCOUNT_SIDEBAR_OFFSET } from "../Common/Sidebar";
@@ -8,7 +8,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getAccountAddressFromPrincipal, getShortenedAddress } from "@/utils/helper";
 import { DEFAULT_CANISTER } from "@/constants";
 import { Wallet, WalletChain } from "@q3x/models";
-import { useSubaccountsByWalletId, useWalletsByPrincipal } from "@/hooks/api/useWallets";
+import { useSubaccountsByCanisterId, useWalletsByPrincipal } from "@/hooks/api/useWallets";
 import { useAuthStore, useWalletStore } from "@/store";
 import { symbol } from "zod";
 
@@ -42,7 +42,7 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
   const router = useRouter();
 
   const { data: userWallets = [] } = useWalletsByPrincipal(principal || "");
-  const { data: fetchedSubaccounts = [] } = useSubaccountsByWalletId(currentWallet?.name || "");
+  const { data: fetchedSubaccounts = [] } = useSubaccountsByCanisterId(currentWallet?.canisterId || "");
 
   const [currentWalletNetworks, setCurrentWalletNetworks] = useState<Network[]>([]);
 
@@ -155,6 +155,7 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
           key={currentWallet?.canisterId || "default-account"}
           accountName={currentWallet?.name || "Default Account"}
           accountAddress={`${(getAccountAddressFromPrincipal(currentWallet?.canisterId || ""))}`}
+          canisterId={currentWallet?.canisterId || ""}
           accountIcon="/account/default-avatar.svg"
           isCurrentAccount={true}
           networks={currentWalletNetworks}
@@ -170,6 +171,7 @@ export default function AccountSidebar({ isOpen, onClose }: AccountSidebarProps)
               key={wallet.canisterId}
               accountName={wallet?.name ?? ""}
               accountAddress={`${(getAccountAddressFromPrincipal(wallet?.canisterId || ""))}`}
+              canisterId={wallet?.canisterId || ""}
               accountIcon="/account/default-avatar.svg"
               isCurrentAccount={false}
               onSwitchClick={() => handleSwitchWallet(wallet)}

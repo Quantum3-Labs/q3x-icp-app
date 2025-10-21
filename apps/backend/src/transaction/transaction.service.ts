@@ -21,22 +21,22 @@ export class TransactionService {
   async createTransaction(
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
-    const { walletId, type, description, createdBy, data } =
+    const { canisterId, type, description, createdBy, data } =
       createTransactionDto;
 
     try {
       // Verify wallet exists
       const wallet = await this.prismaService.deployedWallet.findUnique({
-        where: { name: walletId },
+        where: { canisterId },
       });
 
       if (!wallet) {
-        throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+        throw new NotFoundException(`Wallet with ID ${canisterId} not found`);
       }
 
       const transaction = await this.prismaService.transaction.create({
         data: {
-          walletId,
+          canisterId,
           type,
           data,
           description,
@@ -59,17 +59,17 @@ export class TransactionService {
   }
 
   async getTransactions(filters: {
-    walletId?: string;
+    canisterId?: string;
     status?: string;
     type?: string;
   }): Promise<Transaction[]> {
     try {
-      const { walletId, status, type } = filters;
+      const { canisterId, status, type } = filters;
 
       // Build where clause
       const where: any = {};
-      if (walletId) {
-        where.walletId = walletId;
+      if (canisterId) {
+        where.canisterId = canisterId;
       }
       if (status) {
         where.status = status as TransactionStatus;
@@ -146,14 +146,14 @@ export class TransactionService {
   async updateMultipleTransactionStatus(
     updateDto: BatchUpdateStatusDto,
   ): Promise<Transaction[]> {
-    const { transactionIds, status, walletId } = updateDto;
+    const { transactionIds, status, canisterId } = updateDto;
 
     try {
       // Verify all transactions belong to the wallet
       const transactions = await this.prismaService.transaction.findMany({
         where: {
           id: { in: transactionIds },
-          walletId,
+          canisterId,
         },
       });
 

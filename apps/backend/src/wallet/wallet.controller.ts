@@ -111,7 +111,7 @@ export class WalletController {
   async createSubaccount(
     @Body() createDto: CreateSubaccountDto,
   ): Promise<CreateSubaccountResponseDto> {
-    this.logger.log(`Creating subaccount for wallet: ${createDto.walletId}`);
+    this.logger.log(`Creating subaccount for wallet: ${createDto.canisterId}`);
     const subaccount = await this.walletService.createSubaccount(createDto);
 
     return {
@@ -121,12 +121,12 @@ export class WalletController {
     };
   }
 
-  @Get(':walletId/chains')
+  @Get(':canisterId/chains')
   async getSubaccounts(
-    @Param('walletId') walletId: string,
+    @Param('canisterId') canisterId: string,
   ): Promise<SubaccountsResponseDto> {
-    this.logger.log(`Getting subaccounts for wallet: ${walletId}`);
-    const subaccounts = await this.walletService.getSubaccounts(walletId);
+    this.logger.log(`Getting subaccounts for wallet: ${canisterId}`);
+    const subaccounts = await this.walletService.getSubaccounts(canisterId);
 
     return {
       success: true,
@@ -135,16 +135,16 @@ export class WalletController {
     };
   }
 
-  @Post(':walletId/signers')
+  @Post(':canisterId/signers')
   @HttpCode(HttpStatus.CREATED)
   async addSigner(
-    @Param('walletId') walletId: string,
+    @Param('canisterId') canisterId: string,
     @Body() addSignerDto: AddSignerDto,
   ): Promise<AddSignerResponseDto> {
     this.logger.log(
-      `Adding signer ${addSignerDto.principal} to wallet: ${walletId}`,
+      `Adding signer ${addSignerDto.principal} to wallet: ${canisterId}`,
     );
-    await this.walletService.addSigner(walletId, addSignerDto.principal);
+    await this.walletService.addSigner(canisterId, addSignerDto.principal);
 
     return {
       success: true,
@@ -152,14 +152,14 @@ export class WalletController {
     };
   }
 
-  @Delete(':walletId/signers/:principal')
+  @Delete(':canisterId/signers/:principal')
   @HttpCode(HttpStatus.OK)
   async removeSigner(
-    @Param('walletId') walletId: string,
+    @Param('canisterId') canisterId: string,
     @Param('principal') principal: string,
   ): Promise<RemoveSignerResponseDto> {
-    this.logger.log(`Removing signer ${principal} from wallet: ${walletId}`);
-    await this.walletService.removeSigner(walletId, principal);
+    this.logger.log(`Removing signer ${principal} from wallet: ${canisterId}`);
+    await this.walletService.removeSigner(canisterId, principal);
 
     return {
       success: true,

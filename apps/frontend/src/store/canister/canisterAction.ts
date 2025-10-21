@@ -4,6 +4,7 @@ import { StateCreator } from "zustand";
 import { idlFactory } from "@/assets/wallet.did";
 import { CanisterState } from "./canisterState";
 import { useAuthStore } from "../auth";
+import { getReplicaUrl } from "@/utils/helper";
 
 export interface TransferEvmArgs {
   to: string;
@@ -52,11 +53,11 @@ export const createCanisterActions: StateCreator<CanisterState & CanisterActions
       }
 
       const agent = await HttpAgent.create({
-        host: process.env.NEXT_PUBLIC_REPLICA_URL,
+        host: getReplicaUrl(),
         identity,
       });
 
-      if (process.env.NODE_ENV === "development") {
+      if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
         await agent.fetchRootKey();
       }
 

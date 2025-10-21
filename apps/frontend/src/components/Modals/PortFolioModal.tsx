@@ -42,7 +42,10 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ children }) => {
 
   useEffect(() => {
     if (portfolio) {
-      const tokens = buildAvailableTokens(portfolio, getCurrentNetwork()?.name);
+      const tokens = buildAvailableTokens(
+        portfolio,
+        getCurrentNetwork()?.chainId === "421614" ? "arb" : getCurrentNetwork()?.name,
+      ); //TODO: fix hardcode for arbitrum for now
       setTokenData(tokens);
     }
   }, [portfolio, getCurrentNetwork()?.name]);
@@ -88,8 +91,8 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ children }) => {
                       <Skeleton className=" h-5 w-[100px] inline-block" />
                     ) : showBalance ? (
                       tokenData[0]?.balance ?? "0.00"
-                      // portfolio?.icp_balance?.balance_icp ?? "0.00"
                     ) : (
+                      // portfolio?.icp_balance?.balance_icp ?? "0.00"
                       "*****"
                     )}
                   </span>

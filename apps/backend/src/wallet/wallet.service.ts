@@ -28,6 +28,9 @@ export class WalletService {
 
   async createUserWallet(createWalletDto: CreateWalletDto): Promise<Wallet> {
     const { metadata, name, creatorPrincipal, signers } = createWalletDto;
+    const uniqueSuffix =
+      Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    const internalName = `${name}:::${uniqueSuffix}`;
 
     try {
       // Step 1: Create canister FIRST, then save to database
@@ -87,7 +90,7 @@ export class WalletService {
           const wallet = await tx.deployedWallet.create({
             data: {
               canisterId,
-              name: name,
+              name: internalName,
               status: DeploymentStatus.DEPLOYING,
               metadata: {
                 ...metadata,
@@ -318,26 +321,26 @@ export class WalletService {
 
   // Subaccount
   async createSubaccount(createDto: CreateSubaccountDto): Promise<WalletChain> {
-    const { walletId, chainId, chainName, displayName, evmAddress } = createDto;
+    const { canisterId, chainId, chainName, displayName, evmAddress } = createDto;
 
-    this.logger.log(`Creating subaccount for wallet: ${walletId}`);
+    this.logger.log(`Creating subaccount for wallet: ${canisterId}`);
     this.logger.log(`Creating subaccount for chain: ${chainId}`);
     try {
       // Check if wallet exists
       const wallet = await this.prismaService.deployedWallet.findUnique({
-        where: { name: walletId },
+        where: { canisterId },
       });
 
       if (!wallet) {
-        throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+        throw new NotFoundException(`Wallet with ID ${canisterId} not found`);
       }
 
       // Check if subaccount already exists
       const existingSubaccount =
         await this.prismaService.walletChain.findUnique({
           where: {
-            walletId_chainId: {
-              walletId,
+            canisterId_chainId: {
+              canisterId,
               chainId,
             },
           },
@@ -352,7 +355,7 @@ export class WalletService {
       // Create subaccount
       const subaccount = await this.prismaService.walletChain.create({
         data: {
-          walletId,
+          canisterId,
           chainId,
           chainName,
           displayName,
@@ -369,7 +372,7 @@ export class WalletService {
         throw error;
       }
       this.logger.error(
-        `Failed to create subaccount for wallet ${walletId}`,
+        `Failed to create subaccount for wallet ${canisterId}`,
         error,
       );
       throw new BadRequestException(
@@ -378,20 +381,20 @@ export class WalletService {
     }
   }
 
-  async getSubaccounts(walletId: string): Promise<WalletChain[]> {
+  async getSubaccounts(canisterId: string): Promise<WalletChain[]> {
     try {
       // Check if wallet exists
       const wallet = await this.prismaService.deployedWallet.findUnique({
-        where: { name: walletId },
+        where: { canisterId },
       });
 
       if (!wallet) {
-        throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+        throw new NotFoundException(`Wallet with ID ${canisterId} not found`);
       }
 
       // Get all subaccounts
       const subaccounts = await this.prismaService.walletChain.findMany({
-        where: { walletId },
+        where: { canisterId },
         orderBy: { createdAt: 'asc' },
       });
 
@@ -401,7 +404,7 @@ export class WalletService {
         throw error;
       }
       this.logger.error(
-        `Failed to get subaccounts for wallet ${walletId}`,
+        `Failed to get subaccounts for wallet ${canisterId}`,
         error,
       );
       throw new BadRequestException(
@@ -410,11 +413,11 @@ export class WalletService {
     }
   }
 
-  async addSigner(walletId: string, principal: string): Promise<void> {
+  async addSigner(canisterId: string, principal: string): Promise<void> {
     try {
       // Check if wallet exists
       const wallet = await this.prismaService.deployedWallet.findUnique({
-        where: { name: walletId },
+        where: { canisterId: canisterId },
         include: {
           signers: {
             include: {
@@ -425,7 +428,7 @@ export class WalletService {
       });
 
       if (!wallet) {
-        throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+        throw new NotFoundException(`Wallet with ID ${canisterId} not found`);
       }
 
       // Check if signer already exists
@@ -457,12 +460,12 @@ export class WalletService {
       // Add signer to wallet
       await this.prismaService.walletSigner.create({
         data: {
-          walletId: wallet.id,
+          canisterId: wallet.canisterId,
           userId: user.id,
         },
       });
 
-      this.logger.log(`Added signer ${principal} to wallet ${walletId}`);
+      this.logger.log(`Added signer ${principal} to wallet ${canisterId}`);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -471,18 +474,18 @@ export class WalletService {
         throw error;
       }
       this.logger.error(
-        `Failed to add signer ${principal} to wallet ${walletId}`,
+        `Failed to add signer ${principal} to wallet ${canisterId}`,
         error,
       );
       throw new BadRequestException(`Failed to add signer: ${error.message}`);
     }
   }
 
-  async removeSigner(walletId: string, principal: string): Promise<void> {
+  async removeSigner(canisterId: string, principal: string): Promise<void> {
     try {
       // Check if wallet exists
       const wallet = await this.prismaService.deployedWallet.findUnique({
-        where: { name: walletId },
+        where: { canisterId },
         include: {
           signers: {
             include: {
@@ -493,7 +496,7 @@ export class WalletService {
       });
 
       if (!wallet) {
-        throw new NotFoundException(`Wallet with ID ${walletId} not found`);
+        throw new NotFoundException(`Wallet with ID ${canisterId} not found`);
       }
 
       // Check if signer exists
@@ -503,7 +506,7 @@ export class WalletService {
 
       if (!signerToRemove) {
         throw new NotFoundException(
-          `Signer ${principal} not found in wallet ${walletId}`,
+          `Signer ${principal} not found in wallet ${canisterId}`,
         );
       }
 
@@ -514,7 +517,7 @@ export class WalletService {
         },
       });
 
-      this.logger.log(`Removed signer ${principal} from wallet ${walletId}`);
+      this.logger.log(`Removed signer ${principal} from wallet ${canisterId}`);
     } catch (error) {
       if (
         error instanceof NotFoundException ||
@@ -523,7 +526,7 @@ export class WalletService {
         throw error;
       }
       this.logger.error(
-        `Failed to remove signer ${principal} from wallet ${walletId}`,
+        `Failed to remove signer ${principal} from wallet ${canisterId}`,
         error,
       );
       throw new BadRequestException(

@@ -11,7 +11,7 @@ import { TransactionType } from "@q3x/prisma";
 export class CreateTransactionDto {
   @IsString()
   @IsNotEmpty()
-  walletId: string;
+  canisterId: string;
 
   @IsEnum(TransactionType)
   type: TransactionType;
@@ -43,7 +43,7 @@ export class BatchUpdateStatusDto {
 
   @IsString()
   @IsNotEmpty()
-  walletId: string;
+  canisterId: string;
 }
 
 export class BatchDeleteDto {

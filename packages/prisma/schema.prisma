@@ -13,7 +13,7 @@ datasource db {
 model DeployedWallet {
     id         String           @id @default(cuid())
     canisterId String           @unique @map("canister_id")
-    name       String           @unique
+    name       String
     status     DeploymentStatus @default(DEPLOYING)
     metadata   Json?
     wasmHash   String?          @map("wasm_hash")
@@ -28,7 +28,7 @@ model DeployedWallet {
 }
 
 model WalletChain {
-    walletId    String   @map("wallet_id")
+    canisterId  String   @map("canister_id")
     chainId     String   @map("chain_id")
     chainName   String   @map("chain_name")
     displayName String   @map("display_name") // User custom name
@@ -36,9 +36,9 @@ model WalletChain {
     createdAt   DateTime @default(now()) @map("created_at")
     updatedAt   DateTime @updatedAt @map("updated_at")
 
-    wallet DeployedWallet @relation(fields: [walletId], references: [name], onDelete: Cascade)
+    wallet DeployedWallet @relation(fields: [canisterId], references: [canisterId], onDelete: Cascade)
 
-    @@id([walletId, chainId])
+    @@id([canisterId, chainId])
     @@map("wallet_chain")
 }
 
@@ -56,22 +56,22 @@ model User {
 }
 
 model WalletSigner {
-    id       String         @id @default(cuid())
-    walletId String         @map("wallet_id")
-    userId   String         @map("user_id")
-    wallet   DeployedWallet @relation(fields: [walletId], references: [id])
-    user     User           @relation(fields: [userId], references: [id])
+    id         String         @id @default(cuid())
+    canisterId String         @map("canister_id")
+    userId     String         @map("user_id")
+    wallet     DeployedWallet @relation(fields: [canisterId], references: [canisterId])
+    user       User           @relation(fields: [userId], references: [id])
 
-    @@unique([walletId, userId])
+    @@unique([canisterId, userId])
     @@map("wallet_signers")
 }
 
 model Transaction {
-    id       String            @id @default(cuid())
-    walletId String            @map("wallet_id")
-    type     TransactionType
-    status   TransactionStatus @default(DRAFT)
-    data     Json
+    id         String            @id @default(cuid())
+    canisterId String            @map("canister_id")
+    type       TransactionType
+    status     TransactionStatus @default(DRAFT)
+    data       Json
 
     description String?
     createdBy   String    @map("created_by")
@@ -80,7 +80,7 @@ model Transaction {
     executedAt  DateTime? @map("executed_at")
 
     // Relations
-    wallet DeployedWallet @relation(fields: [walletId], references: [name])
+    wallet DeployedWallet @relation(fields: [canisterId], references: [canisterId])
 
     @@map("transactions")
 }

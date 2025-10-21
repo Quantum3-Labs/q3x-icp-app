@@ -7,6 +7,7 @@ import { copyAddressToClipboard, getShortenedAddress } from "@/utils/helper";
 interface AccountCardProps {
   accountName: string;
   accountAddress: string;
+  canisterId: string;
   accountIcon: string;
   networks?: Network[];
   showSubAccountButton?: boolean;
@@ -21,6 +22,7 @@ interface AccountCardProps {
 export function AccountCard({
   accountName,
   accountAddress,
+  canisterId,
   accountIcon,
   networks = [],
   showSubAccountButton = false,
@@ -65,9 +67,9 @@ export function AccountCard({
             <h3 className="text-base leading-none tracking-tight text-text-primary">{accountName}</h3>
             <div className="flex items-center justify-center rounded-full bg-primary text-xs w-fit px-2 text-white" onClick={e => {
               e.stopPropagation();
-              copyAddressToClipboard(accountAddress);
+              copyAddressToClipboard(canisterId);
             }}>
-              <span>{getShortenedAddress(accountAddress)}</span>
+              <span>{getShortenedAddress(canisterId)}</span>
             </div>
           </div>
         </div>
@@ -104,7 +106,7 @@ export function AccountCard({
                   key={index}
                   icon={network.icon}
                   name={network.name}
-                  symbol={network.symbol}
+                  symbol={network.name.includes("Arbitrum") ? 'arb' : network.symbol}
                   address={network.address}
                   isDefault={network.isDefault}
                   isActive={network.chainId === activeChainId}

@@ -118,6 +118,7 @@ export default function DashboardContainer() {
       batchData: tx.batchData,
       txHash: tx.txHash,
       isHistory: true,
+      threshold: tx.oldThreshold,
     }));
 
     // Combine and sort by date
@@ -142,7 +143,7 @@ export default function DashboardContainer() {
           message.signers.length > 0 &&
           message.signers.map(s => s.toString()).includes(principal),
       ),
-      oldThreshold: walletData[0]?.threshold,
+      oldThreshold: message?.threshold,
       status: message.needsApproval ? undefined : ("success" as const),
       onApprove: () => handleApprove(message.rawMessage),
     };
@@ -229,17 +230,18 @@ export default function DashboardContainer() {
             approveNumber: message.approveNumber,
             batchData: batchData,
             signers: message.signers?.map(s => s.toString()) || [],
+            oldThreshold: message.threshold,
           });
 
           //add or remove on backend
           if (message.type === MessageType.ADD_SIGNER) {
             await addSigner({
-              walletId: currentWallet.name,
+              canisterId: currentWallet.canisterId,
               principal: message.data,
             });
           } else if (message.type === MessageType.REMOVE_SIGNER) {
             await removeSigner({
-              walletId: currentWallet.name,
+              canisterId: currentWallet.canisterId,
               principal: message.data,
             });
           }

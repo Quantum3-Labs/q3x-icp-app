@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_DB: q3x
+      POSTGRES_USER: q3x
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U q3x"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        - NEXT_PUBLIC_NODE_ENV=${NEXT_PUBLIC_NODE_ENV}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        - NEXT_PUBLIC_REPLICA_URL_PROD=${NEXT_PUBLIC_REPLICA_URL_PROD}
+        - NEXT_PUBLIC_CANISTER_ID_INTERNET_IDENTITY_PROD=${NEXT_PUBLIC_CANISTER_ID_INTERNET_IDENTITY_PROD}
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

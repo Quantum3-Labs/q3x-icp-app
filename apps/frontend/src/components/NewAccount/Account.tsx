@@ -6,6 +6,8 @@ import { Controller, UseFormReturn } from "react-hook-form";
 import { Field, FieldDescription, FieldError, FieldGroup } from "../ui/field";
 import { InputGroup, InputGroupAddon, InputGroupText } from "../ui/input-group";
 import { Input } from "../ui/input";
+import { useAuthStore, useWalletStore } from "@/store";
+import { useWalletsByPrincipal } from "@/hooks/api/useWallets";
 
 interface AccountProps {
   className?: string;
@@ -15,6 +17,16 @@ interface AccountProps {
 }
 
 export default function Account({ className, form, onNextStep, isValid = false }: AccountProps) {
+  const { principal } = useAuthStore();
+  const { currentWallet } = useWalletStore();
+  const { data: userWallets = [] } = useWalletsByPrincipal(principal || "");
+
+  const checkNameIsExist = () => {
+    if (currentWallet?.name === form.getValues("accountName")) return true;
+    if (userWallets.some(wallet => wallet.name === form.getValues("accountName"))) return true;
+    return false;
+  };
+
   const handleNextClick = () => {
     if (isValid) {
       onNextStep();
@@ -80,7 +92,7 @@ export default function Account({ className, form, onNextStep, isValid = false }
                         boxShadow: "none !important",
                         outline: "none !important",
                       }}
-                      aria-invalid={fieldState.invalid}
+                      aria-invalid={fieldState.invalid || checkNameIsExist()}
                       autoComplete="off"
                     />
                     <InputGroupAddon align="block-end" className="!pb-0 -mt-1">
@@ -111,9 +123,11 @@ export default function Account({ className, form, onNextStep, isValid = false }
         <div className="flex gap-2 items-center justify-center w-full max-w-xs">
           <button
             onClick={handleNextClick}
-            disabled={!isValid}
-            className={`flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] cursor-pointer ${
-              isValid ? "bg-gradient-to-b from-[#48b3ff] to-[#0059ff]" : "bg-gray-400 cursor-not-allowed"
+            disabled={checkNameIsExist()}
+            className={`flex items-center justify-center px-5 py-2 rounded-[10px] shadow-[0px_2px_4px_-1px_rgba(12,12,106,0.5),0px_0px_0px_1px_#4470ff] ${
+              isValid && !checkNameIsExist()
+                ? "bg-gradient-to-b from-[#48b3ff] to-[#0059ff] cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
             }`}
           >
             <span className="font-semibold text-[16px] text-center text-white tracking-[-0.16px]">Next Step</span>

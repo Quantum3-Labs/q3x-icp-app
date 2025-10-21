@@ -6,7 +6,7 @@ import {
 
 export class Transaction {
   id: string;
-  walletId: string;
+  canisterId: string;
   type: TransactionType;
   status: TransactionStatus;
   data: Record<string, any>;
@@ -18,7 +18,7 @@ export class Transaction {
 
   constructor(prismaTransaction: Partial<PrismaTransaction>) {
     this.id = prismaTransaction.id || "";
-    this.walletId = prismaTransaction.walletId || "";
+    this.canisterId = prismaTransaction.canisterId || "";
     this.type = prismaTransaction.type || TransactionType.ICP_TRANSFER;
     this.status = prismaTransaction.status || TransactionStatus.DRAFT;
     this.data = (prismaTransaction.data as Record<string, any>) || {};

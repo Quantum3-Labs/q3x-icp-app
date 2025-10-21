@@ -1,7 +1,7 @@
 import { WalletChain as PrismaWalletChain } from "@q3x/prisma";
 
 export class WalletChain {
-  walletId: string;
+  canisterId: string;
   chainId: string;
   chainName: string;
   displayName: string;
@@ -10,7 +10,7 @@ export class WalletChain {
   updatedAt: Date;
 
   constructor(prismaWalletChain: Partial<PrismaWalletChain>) {
-    this.walletId = prismaWalletChain.walletId || '';
+    this.canisterId = prismaWalletChain.canisterId || '';
     this.chainId = prismaWalletChain.chainId || '';
     this.chainName = prismaWalletChain.chainName || '';
     this.displayName = prismaWalletChain.displayName || '';

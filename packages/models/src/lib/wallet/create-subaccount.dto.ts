@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString } from "class-validator";
 export class CreateSubaccountDto {
   @IsString()
   @IsNotEmpty()
-  walletId: string;
+  canisterId: string;
 
   @IsString()
   @IsNotEmpty()

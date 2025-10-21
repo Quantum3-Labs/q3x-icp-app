@@ -91,7 +91,7 @@ export const buildAvailableTokens = (portfolio: PortfolioBalance, symbol = "icp"
       tokens.push({
         id: "arb",
         name: "Arbitrum",
-        symbol: "ARB",
+        symbol: "ETH",
         icon: "/token/arb.svg",
         chainId: "421614",
         balance: arbBalance,
@@ -124,3 +124,19 @@ export const buildAvailableTokens = (portfolio: PortfolioBalance, symbol = "icp"
 
   return tokens;
 };
+
+export const getReplicaUrl = () => {
+  if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
+    return process.env.NEXT_PUBLIC_REPLICA_URL_PROD || "https://icp0.io";
+  }
+
+  return process.env.NEXT_PUBLIC_REPLICA_URL || "http://localhost:4943";
+}
+export const getInternetIdentityUrl = () => {
+  console.log("process.env.NEXT_PUBLIC_NODE_ENV:", process.env.NEXT_PUBLIC_NODE_ENV);
+  if (process.env.NEXT_PUBLIC_NODE_ENV === "production") {
+    return process.env.NEXT_PUBLIC_CANISTER_ID_INTERNET_IDENTITY_PROD || "https://identity.ic0.app";
+  }
+
+  return process.env.NEXT_PUBLIC_CANISTER_ID_INTERNET_IDENTITY || "http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943";
+}

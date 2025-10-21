@@ -87,12 +87,12 @@ const createSubaccountAPI = async (subaccountData: CreateSubaccountDto): Promise
   return result.data;
 };
 
-const getSubaccountsByWalletId = async (walletId: string): Promise<WalletChain[]> => {
-  if (!walletId) {
-    throw new Error("Wallet ID is required");
+const getSubaccountsByCanisterId = async (canisterId: string): Promise<WalletChain[]> => {
+  if (!canisterId) {
+    throw new Error("Canister ID is required");
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/wallets/${walletId}/chains`);
+  const response = await fetch(`${API_BASE_URL}/api/wallets/${canisterId}/chains`);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch subaccounts: ${response.statusText}`);
@@ -107,8 +107,8 @@ const getSubaccountsByWalletId = async (walletId: string): Promise<WalletChain[]
   return result.data;
 };
 
-const addSignerAPI = async (walletId: string, principal: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/wallets/${walletId}/signers`, {
+const addSignerAPI = async (canisterId: string, principal: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/wallets/${canisterId}/signers`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -127,8 +127,8 @@ const addSignerAPI = async (walletId: string, principal: string): Promise<void> 
   }
 };
 
-const removeSignerAPI = async (walletId: string, principal: string): Promise<void> => {
-  const response = await fetch(`${API_BASE_URL}/api/wallets/${walletId}/signers/${principal}`, {
+const removeSignerAPI = async (canisterId: string, principal: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}/api/wallets/${canisterId}/signers/${principal}`, {
     method: "DELETE",
   });
 
@@ -148,8 +148,8 @@ export const walletKeys = {
   all: ["wallets"] as const,
   byPrincipal: (principal: string) => [...walletKeys.all, "principal", principal] as const,
   byCanisterId: (canisterId: string) => [...walletKeys.all, "canister", canisterId] as const,
-  subaccounts: (walletId: string) => [...walletKeys.all, "subaccounts", walletId] as const,
-  signers: (walletId: string) => [...walletKeys.all, "signers", walletId] as const,
+  subaccounts: (canisterId: string) => [...walletKeys.all, "subaccounts", canisterId] as const,
+  signers: (canisterId: string) => [...walletKeys.all, "signers", canisterId] as const,
 };
 
 // React Query hooks
@@ -190,7 +190,7 @@ export const useCreateSubaccount = () => {
     mutationFn: ({ subaccountData }: { subaccountData: CreateSubaccountDto }) => createSubaccountAPI(subaccountData),
     onSuccess: (_, { subaccountData }) => {
       // Invalidate subaccounts for this wallet
-      queryClient.invalidateQueries({ queryKey: walletKeys.subaccounts(subaccountData.walletId) });
+      queryClient.invalidateQueries({ queryKey: walletKeys.subaccounts(subaccountData.canisterId) });
       // Also invalidate all wallets in case we need to refresh wallet data
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
     },
@@ -200,11 +200,11 @@ export const useCreateSubaccount = () => {
   });
 };
 
-export const useSubaccountsByWalletId = (walletId: string) => {
+export const useSubaccountsByCanisterId = (canisterId: string) => {
   return useQuery({
-    queryKey: walletKeys.subaccounts(walletId),
-    queryFn: () => getSubaccountsByWalletId(walletId),
-    enabled: !!walletId,
+    queryKey: walletKeys.subaccounts(canisterId),
+    queryFn: () => getSubaccountsByCanisterId(canisterId),
+    enabled: !!canisterId,
   });
 };
 
@@ -212,11 +212,12 @@ export const useAddSigner = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ walletId, principal }: { walletId: string; principal: string }) => addSignerAPI(walletId, principal),
-    onSuccess: (_, { walletId }) => {
+    mutationFn: ({ canisterId, principal }: { canisterId: string; principal: string }) =>
+      addSignerAPI(canisterId, principal),
+    onSuccess: (_, { canisterId }) => {
       // Invalidate wallet data to refresh signers
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
-      queryClient.invalidateQueries({ queryKey: walletKeys.signers(walletId) });
+      queryClient.invalidateQueries({ queryKey: walletKeys.signers(canisterId) });
     },
     onError: error => {
       console.error("Add signer error:", error);
@@ -228,12 +229,12 @@ export const useRemoveSigner = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ walletId, principal }: { walletId: string; principal: string }) =>
-      removeSignerAPI(walletId, principal),
-    onSuccess: (_, { walletId }) => {
+    mutationFn: ({ canisterId, principal }: { canisterId: string; principal: string }) =>
+      removeSignerAPI(canisterId, principal),
+    onSuccess: (_, { canisterId }) => {
       // Invalidate wallet data to refresh signers
       queryClient.invalidateQueries({ queryKey: walletKeys.all });
-      queryClient.invalidateQueries({ queryKey: walletKeys.signers(walletId) });
+      queryClient.invalidateQueries({ queryKey: walletKeys.signers(canisterId) });
     },
     onError: error => {
       console.error("Remove signer error:", error);

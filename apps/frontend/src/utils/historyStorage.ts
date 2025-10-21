@@ -11,6 +11,7 @@ export interface HistoryTransaction {
   createdAt: string;
   approveNumber?: number;
   signers?: string[];
+  oldThreshold?: number;
 }
 
 class HistoryStorage {

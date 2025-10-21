@@ -49,6 +49,7 @@ export interface PendingMessage {
   approveNumber: number;
   needsApproval: boolean;
   rawMessage: string;
+  threshold?: number;
 }
 
 export const decodeBatchMessage = (messageString: string) => {
@@ -138,6 +139,7 @@ export const parseMessageQueue = (messageQueue: any[], threshold: number): Pendi
       approveNumber: signers.length,
       needsApproval: signers.length < threshold,
       rawMessage: messageString,
+      threshold: threshold,
     };
   });
 };

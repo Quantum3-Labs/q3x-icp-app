@@ -1,4 +1,7 @@
-import { DeploymentStatus, DeployedWallet as PrismaDeployedWallet } from "@q3x/prisma";
+import {
+  DeploymentStatus,
+  DeployedWallet as PrismaDeployedWallet,
+} from "@q3x/prisma";
 
 export class Wallet {
   id: string;
@@ -11,12 +14,10 @@ export class Wallet {
   updatedAt?: Date;
   isActive: boolean;
 
-  constructor(
-    prismaWallet: Partial<PrismaDeployedWallet>
-  ) {
-    this.id = prismaWallet.id || '';
-    this.canisterId = prismaWallet.canisterId || '';
-    this.name = prismaWallet.name || '';
+  constructor(prismaWallet: Partial<PrismaDeployedWallet>) {
+    this.id = prismaWallet.id || "";
+    this.canisterId = prismaWallet.canisterId || "";
+    this.name = this.extractCleanName(prismaWallet.name || "");
     this.status = prismaWallet.status || DeploymentStatus.DEPLOYING;
     this.metadata = prismaWallet.metadata || null;
     this.wasmHash = prismaWallet.wasmHash || undefined;
@@ -36,5 +37,12 @@ export class Wallet {
 
   getMetadata<T = any>(): T | null {
     return this.metadata as T;
+  }
+
+  private extractCleanName(internalName: string): string {
+    if (internalName.includes(":::")) {
+      return internalName.split(":::")[0];
+    }
+    return internalName;
   }
 }

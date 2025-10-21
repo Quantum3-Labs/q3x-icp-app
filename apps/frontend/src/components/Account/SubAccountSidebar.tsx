@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { CustomCheckbox } from "../Common/CustomCheckbox";
 import { getShortenedAddress, getAccountAddressFromPrincipal } from "@/utils/helper";
 import { useCanisterStore, useWalletStore } from "@/store";
-import { useSubaccountsByWalletId, useCreateSubaccount } from "@/hooks/api/useWallets";
+import { useSubaccountsByCanisterId, useCreateSubaccount } from "@/hooks/api/useWallets";
 import { CreateSubaccountDto } from "@q3x/models";
 import { symbol } from "zod";
 
@@ -28,7 +28,7 @@ export const supportedChains = [
     chainId: "421614",
     chainName: "Arbitrum Sepolia",
     label: "Arbitrum",
-    symbol: "ARB",
+    symbol: "ETH",
     icon: "/token/arb.svg",
     enabled: true,
   },
@@ -50,7 +50,7 @@ export default function SubAccountSidebar({ isOpen, onClose, offset }: SubAccoun
   const [canisterAddress, setCanisterAddress] = useState<string>(getAccountAddressFromPrincipal(currentWallet?.canisterId || ""));
 
   // Get existing subaccounts
-  const { data: subaccounts = [] } = useSubaccountsByWalletId(currentWallet?.name || "");
+  const { data: subaccounts = [] } = useSubaccountsByCanisterId(currentWallet?.canisterId || "");
   const { mutateAsync: createSubaccount } = useCreateSubaccount();
 
   // Get existing chain IDs
@@ -103,7 +103,7 @@ export default function SubAccountSidebar({ isOpen, onClose, offset }: SubAccoun
           // Create subaccount via backend
           const createSubAccountDto: CreateSubaccountDto = {
             chainId,
-            walletId: currentWallet?.name,
+            canisterId: currentWallet?.canisterId,
             chainName: chain.chainName,
             displayName: chain.symbol,
             evmAddress,

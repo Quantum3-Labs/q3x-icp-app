@@ -37,7 +37,7 @@ export class TransactionController {
     @Body() createTransactionDto: CreateTransactionDto,
   ): Promise<CreateTransactionResponseDto> {
     this.logger.log(
-      `Creating transaction for wallet: ${createTransactionDto.walletId}`,
+      `Creating transaction for wallet: ${createTransactionDto.canisterId}`,
     );
     const transaction =
       await this.transactionService.createTransaction(createTransactionDto);
@@ -51,15 +51,15 @@ export class TransactionController {
 
   @Get()
   async getTransactions(
-    @Query('walletId') walletId?: string,
+    @Query('canisterId') canisterId?: string,
     @Query('status') status?: string,
     @Query('type') type?: string,
   ): Promise<TransactionsResponseDto> {
     this.logger.log(
-      `Getting transactions - walletId: ${walletId}, status: ${status}, type: ${type}`,
+      `Getting transactions - canisterId: ${canisterId}, status: ${status}, type: ${type}`,
     );
     const transactions = await this.transactionService.getTransactions({
-      walletId,
+      canisterId,
       status,
       type,
     });

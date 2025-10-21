@@ -2,6 +2,7 @@ import { AuthClient } from "@dfinity/auth-client";
 import { StateCreator } from "zustand";
 import { AuthState } from "./authState";
 import { useWalletStore } from "../wallet";
+import { getInternetIdentityUrl } from "@/utils/helper";
 
 export interface AuthActions {
   login: () => Promise<void>;
@@ -37,7 +38,7 @@ export const createAuthActions: StateCreator<AuthState & AuthActions, [], [], Au
 
     try {
       await authClient.login({
-        identityProvider: process.env.NEXT_PUBLIC_CANISTER_ID_INTERNET_IDENTITY,
+        identityProvider: getInternetIdentityUrl(),
         onSuccess: () => {
           const identity = authClient.getIdentity();
           const principal = identity.getPrincipal().toString();
