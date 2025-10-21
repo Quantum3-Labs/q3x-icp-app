@@ -1,6 +1,13 @@
 # Q3X ICP Application
 
-A decentralized application built on Internet Computer Protocol (ICP) with a NestJS backend and Next.js frontend.
+Q3x is an one-stop, privacy-first programmable multisig platform supporting multiple blockchains. The platform enables asset management across chains from a single interface, leveraging the Internet Computer’s Chain Fusion for multichain interactions and vetKeys for signers privacy.
+
+## High Level Architecture
+<img width="7185" height="6096" alt="image" src="https://github.com/user-attachments/assets/3bd3c0a0-043d-4e1f-9f89-cf2dc0c246c8" />
+
+
+
+# Running Q3x Locally
 
 ## Prerequisites
 
