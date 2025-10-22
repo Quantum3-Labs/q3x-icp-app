@@ -17,7 +17,7 @@ export class Wallet {
   constructor(prismaWallet: Partial<PrismaDeployedWallet>) {
     this.id = prismaWallet.id || "";
     this.canisterId = prismaWallet.canisterId || "";
-    this.name = this.extractCleanName(prismaWallet.name || "");
+    this.name = prismaWallet.name || "";
     this.status = prismaWallet.status || DeploymentStatus.DEPLOYING;
     this.metadata = prismaWallet.metadata || null;
     this.wasmHash = prismaWallet.wasmHash || undefined;
@@ -37,12 +37,5 @@ export class Wallet {
 
   getMetadata<T = any>(): T | null {
     return this.metadata as T;
-  }
-
-  private extractCleanName(internalName: string): string {
-    if (internalName.includes(":::")) {
-      return internalName.split(":::")[0];
-    }
-    return internalName;
   }
 }

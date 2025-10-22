@@ -28,9 +28,6 @@ export class WalletService {
 
   async createUserWallet(createWalletDto: CreateWalletDto): Promise<Wallet> {
     const { metadata, name, creatorPrincipal, signers } = createWalletDto;
-    const uniqueSuffix =
-      Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-    const internalName = `${name}:::${uniqueSuffix}`;
 
     try {
       // Step 1: Create canister FIRST, then save to database
@@ -90,7 +87,7 @@ export class WalletService {
           const wallet = await tx.deployedWallet.create({
             data: {
               canisterId,
-              name: internalName,
+              name,
               status: DeploymentStatus.DEPLOYING,
               metadata: {
                 ...metadata,

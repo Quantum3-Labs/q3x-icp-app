@@ -230,3 +230,42 @@ dfx start --clean --background
 ## Support
 
 For issues and questions, please refer to the project's GitHub repository or contact the development team.
+
+---
+
+# Docker Production Deployment
+
+For production deployment, use Docker to containerize the entire application stack.
+
+## Quick Start with Docker
+
+```bash
+# 1. Navigate to docker directory
+cd docker
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your production values (POSTGRES_PASSWORD, PRIVATE_KEY_HEX, etc.)
+
+# 3. Build and start
+docker compose up --build -d
+
+# 4. Access application
+# Frontend: http://localhost:3000
+# Backend: http://localhost:4000
+```
+
+## Important Notes
+
+- **Production Only**: Docker setup is configured for production deployment
+- **Environment**: Update `.env` with your production URLs and credentials
+- **Database**: PostgreSQL data persists in Docker volumes
+- **ICP Integration**: Uses mainnet endpoints (https://icp0.io)
+
+## Stop Services
+
+```bash
+docker compose down
+```
+
+> **Note:** For local development, use the standard setup instructions above. Docker deployment is intended for production environments.
