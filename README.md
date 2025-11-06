@@ -15,6 +15,8 @@ Q3x is an one-stop, privacy-first programmable multisig platform supporting mult
 - [ ] Expand to support more EVMs
 - [ ] Expand to support more than just managing multisig, introduce payroll management system
 
+Note: The [wallet.wasm](https://github.com/Quantum3-Labs/q3x-icp-app/blob/master/apps/backend/assets/wallet.wasm) is build from [here](https://github.com/Huygon764/q3x-dapp/tree/chain-fusion) 
+
 # Running Q3x Locally
 
 ## Prerequisites
